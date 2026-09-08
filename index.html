@@ -82,15 +82,7 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     </div>
   </div>
   <div class="section">
-    <h2>System</h2>
-    <label>Bracket</label>
-    <select id="bracket"></select>
-    <label>Finial</label><select id="finial"></select>
-    <label>Post</label><select id="post"></select>
-    <label>Base</label><select id="base"></select>
-  </div>
-  <div class="section">
-    <h2>Proof Appearance</h2>
+    <h2>Sign Appearance</h2>
     <div class="row2">
       <div>
         <label>Sign Face</label>
@@ -109,6 +101,14 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
         </select>
       </div>
     </div>
+  </div>
+  <div class="section">
+    <h2>System</h2>
+    <label>Bracket</label>
+    <select id="bracket"></select>
+    <label>Finial</label><select id="finial"></select>
+    <label>Post</label><select id="post"></select>
+    <label>Base</label><select id="base"></select>
   </div>
   <div class="actions">
     <button class="primary" onclick="window.print()">Print / Save PDF</button>
@@ -230,7 +230,7 @@ const AA_DOME_CAP_SVG = `<g class="finish" fill="#111111">
    <path d="M-34,-25 Q0,-20 34,-25"/>
    <path d="M-34,-19 Q0,-16 34,-19"/>
  </g>`;
-const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
+const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"NONE","label":"None","style":"none"},{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"NONE","label":"None","style":"none","height":"0 in","family":"None"},{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
 const $ = id => document.getElementById(id);
 function fillSelect(id, items, labelFn) {
   const sel=$(id); sel.innerHTML="";
@@ -248,9 +248,9 @@ fillSelect("base",DATA.bases);
 fillSelect("config",DATA.configs,x=>x);
 $("blade").value="0";
 $("bracket").value="0";
-$("finial").value="2";
+$("finial").value="3";
 $("post").value="0";
-$("base").value="0";
+$("base").value="1";
 $("config").value="0";
 function esc(s) {
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -357,7 +357,7 @@ function render() {
   // -------------------------
   // Catalog post lengths: 12' / 13' = 144 / 156 in.
   const postIn = post.height==="13 ft" ? 156 : 144;
-  const baseIn = base.style==="short" ? 8.25 : (base.style==="sb46" ? 29 : 27);
+  const baseIn = base.style==="none" ? 0 : (base.style==="short" ? 8.25 : (base.style==="sb46" ? 29 : 27));
   const bladeWIn = blade.size==="36" ? 36 : 30;
   // Blade heights from catalog dimensions.
   const dims = blade.dims.split("x").map(x=>parseFloat(x.trim()));
@@ -406,7 +406,9 @@ function render() {
   // Scale the tall/short base to catalog-relative height.
   const baseTopY = groundY-basePxH;
   let baseSvg;
-  if(base.style==="short") {
+  if(base.style==="none") {
+    baseSvg = "";
+  } else if(base.style==="short") {
     baseSvg = `
       <rect x="${postX-16}" y="${baseTopY}" width="32" height="${basePxH-8}" rx="5" fill="#111"/>
       <rect x="${postX-34}" y="${groundY-10}" width="68" height="10" rx="3" fill="#111"/>`;
@@ -477,7 +479,9 @@ function render() {
   }
   // Place finial immediately above post top.
   let finialSvg;
-  if(finial.style==="pineapple") {
+  if(finial.style==="none") {
+    finialSvg="";
+  } else if(finial.style==="pineapple") {
     const scale=38/200;
     finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_PINEAPPLE_FINIAL_SVG}</g>`;
   } else if(finial.style==="ball") {
