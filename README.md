@@ -11,7 +11,24 @@ dependencies.
 
 ## Running it
 
-Open `index.html` in any modern browser. That's it.
+### Live app
+
+Couyon is intended to be published from the repository root with **GitHub Pages**:
+
+- Source branch: `main`
+- Folder: `/ (root)`
+- Expected public URL: `https://aaccents.github.io/couyon/`
+
+Once Pages is enabled, the live site follows `main`: commit a change, wait for
+GitHub Pages to deploy it, then refresh the live app.
+
+### Local fallback
+
+Open `index.html` in any modern browser. No build step or local server is required.
+
+The header includes a build indicator. On the hosted version it attempts to show
+the first seven characters of the latest `main` commit SHA, making it easier to
+confirm which revision is running.
 
 ## What it does
 
@@ -42,3 +59,14 @@ are traced.
 - Spear finial is a placeholder shape
 - Proof output is marked *Concept Proof — Not for fabrication*; dimensioned
   shop drawings are out of scope for the prototype
+
+
+## Development workflow
+
+Treat `main` as the canonical current Couyon source. Before editing, fetch the
+latest repository version. After a meaningful, tested change, commit it with a
+descriptive message. This keeps ChatGPT, Claude, and human edits synchronized and
+gives the SVG geometry a recoverable history.
+
+Do not commit customer proof exports, credentials, API keys, private customer data,
+or vendor-confidential material.
