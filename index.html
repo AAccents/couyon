@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AA Proof Generator — Prototype v0.7</title>
+<style>
+:root {
+  --bg:#eef1f4; --panel:#ffffff; --ink:#17191c; --muted:#6b7280;
+  --aa:#f58220; --line:#d7dce2; --black:#111;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#111;color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:42px;height:42px;border:3px solid var(--aa);border-radius:8px;display:grid;place-items:center;font-weight:800;color:var(--aa)}
+h1{font-size:20px;margin:0} .sub{font-size:12px;color:#b8bec7;margin-top:3px}
+.badge{font-size:12px;border:1px solid #444;border-radius:999px;padding:6px 10px;color:#ddd}
+.app{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 78px)}
+.controls{background:#fff;border-right:1px solid var(--line);padding:20px;overflow:auto}
+.previewWrap{padding:24px;display:flex;flex-direction:column;gap:16px}
+.section{margin-bottom:20px}
+.section h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:#444}
+label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
+input,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+button{border:0;border-radius:8px;padding:10px 12px;font-weight:700;cursor:pointer}
+.primary{background:var(--aa);color:white} .secondary{background:#e7ebef;color:#111}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.proofHeader{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.proofHeader strong{font-size:15px} .meta{font-size:12px;color:var(--muted);margin-top:4px}
+.canvas{padding:18px;min-height:560px;display:flex;align-items:center;justify-content:center}
+svg{width:100%;max-width:900px;height:auto;background:linear-gradient(#f8fafc,#eef2f6);border-radius:10px}
+.summary{padding:14px 18px 18px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+td{border-top:1px solid #edf0f2;padding:8px 6px;vertical-align:top}
+td:first-child{width:32%;color:var(--muted);font-weight:700}
+.note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:12px}
+@media(max-width:900px){.app{grid-template-columns:1fr}.controls{border-right:0;border-bottom:1px solid var(--line)}}
+@media print{
+ body{background:white}
+ header,.controls,.screenOnly{display:none!important}
+ .app{display:block}
+ .previewWrap{padding:0}
+ .card{border:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">AA</div>
+    <div><h1>AA Proof Generator</h1><div class="sub">Street Name System — Prototype v0.7</div></div>
+  </div>
+  <div class="badge">Source-backed CPC workflow</div>
+</header>
+<div class="app">
+<aside class="controls">
+  <div class="section">
+    <h2>Job</h2>
+    <label>Customer / Development</label>
+    <input id="customer" value="Sample Development">
+    <label>Proof Title</label>
+    <input id="job" value="Street Name System">
+  </div>
+  <div class="section">
+    <h2>Street Names</h2>
+    <label>Primary Street</label>
+    <input id="street1" value="Madison Ave">
+    <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-top:7px">
+      <input id="noStreet1" type="checkbox" style="width:auto;padding:0;margin:0">
+      No primary street
+    </label>
+    <label>Cross Street</label>
+    <input id="street2" value="Washington St">
+    <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-top:7px">
+      <input id="noStreet2" type="checkbox" style="width:auto;padding:0;margin:0">
+      No cross street
+    </label>
+  </div>
+  <div class="section">
+    <h2>System</h2>
+    <label>Blade Style</label>
+    <select id="blade"></select>
+    <label>Bracket</label>
+    <select id="bracket"></select>
+    <div class="row2">
+      <div><label>Finial</label><select id="finial"></select></div>
+      <div><label>Configuration</label><select id="config"></select></div>
+    </div>
+    <label>Post</label><select id="post"></select>
+    <label>Base</label><select id="base"></select>
+  </div>
+  <div class="section">
+    <h2>Proof Appearance</h2>
+    <div class="row2">
+      <div>
+        <label>Sign Face</label>
+        <select id="face">
+          <option value="#1f4f88">Blue</option>
+          <option value="#0f6b45">Green</option>
+          <option value="#1d1d1d">Black</option>
+          <option value="#6f1d1b">Burgundy</option>
+        </select>
+      </div>
+      <div>
+        <label>Lettering</label>
+        <select id="letters">
+          <option value="#ffffff">White</option>
+          <option value="#f5d36b">Gold</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div class="actions">
+    <button class="primary" onclick="window.print()">Print / Save PDF</button>
+    <button class="secondary" onclick="exportSVG()">Export SVG</button>
+  </div>
+  <div class="note">
+    v0.7 refinement: street-name blades raised closer to the finial; TCP Corinthian base redrawn with a narrower, layered 27 in silhouette. Previous component pass: TCP Standard defaults to the 2 3/8 Black Powder Post, Corinthian Base, and Dome Cap. Rouzan-style 4 in Square Post and SB46 Base are selectable placeholders until their dedicated vectors are built.
+  </div>
+</aside>
+<main class="previewWrap">
+  <section class="card">
+    <div class="proofHeader">
+      <div>
+        <strong id="proofTitle">Street Name System</strong>
+        <div class="meta" id="proofMeta">Sample Development</div>
+      </div>
+      <div style="text-align:right">
+        <strong>ALUMINUM ACCENTS</strong>
+        <div class="meta">Concept Proof — Not for fabrication</div>
+      </div>
+    </div>
+    <div class="canvas">
+      <svg id="proof" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".18"/>
+          </filter>
+        </defs>
+        <rect width="900" height="620" fill="#f4f6f8"/>
+
+        <g id="assembly"></g>
+      </svg>
+    </div>
+    <div class="summary">
+      <table>
+        <tr><td>Blade</td><td id="sumBlade"></td></tr>
+        <tr><td>Bracket</td><td id="sumBracket"></td></tr>
+        <tr><td>Post</td><td id="sumPost"></td></tr>
+        <tr><td>Finial</td><td id="sumFinial"></td></tr>
+        <tr><td>Base</td><td id="sumBase"></td></tr>
+        <tr><td>Configuration</td><td id="sumConfig"></td></tr>
+      </table>
+    </div>
+  </section>
+</main>
+</div>
+<script>
+const AA_PINEAPPLE_FINIAL_SVG = `<g class="finish" fill="#111111"><path d="M 1.8,-200 C 3.33,-198.83 8.13,-195.50 11,-193 C 13.87,-190.50 16.50,-188.00 19,-185 C 21.50,-182.00 23.83,-178.67 26,-175 C 28.17,-171.33 30.33,-166.83 32,-163 C 33.67,-159.17 35.03,-155.50 36,-152 C 36.97,-148.50 37.63,-145.00 37.8,-142 C 37.97,-139.00 37.63,-136.33 37,-134 C 36.37,-131.67 35.17,-129.67 34,-128 C 32.83,-126.33 31.33,-125.17 30,-124 C 28.67,-122.83 25.33,-121.33 26,-121 C 26.67,-120.67 31.17,-122.00 34,-122 C 36.83,-122.00 40.58,-121.58 43,-121 L 48.5,-118.5 L 44,-114 C 42.08,-112.75 38.83,-111.67 37,-111 L 33,-110 L 40,-108 L 46,-105 L 45,-100 C 44.17,-98.33 42.50,-96.50 41,-95 C 39.50,-93.50 37.67,-92.17 36,-91 C 34.33,-89.83 32.33,-89.00 31,-88 C 29.67,-87.00 28.75,-86.17 28,-85 C 27.25,-83.83 26.42,-82.33 26.5,-81 C 26.58,-79.67 28.50,-78.33 28.5,-77 C 28.50,-75.67 27.00,-74.50 26.5,-73 C 26.00,-71.50 25.42,-69.83 25.5,-68 C 25.58,-66.17 26.25,-64.00 27,-62 C 27.75,-60.00 28.92,-57.83 30,-56 C 31.08,-54.17 31.17,-52.42 33.5,-51 L 44,-47.5 L 46,-45.5 L 46,-42.5 L 44,-41 L 40.5,-39.5 L 38.5,-36 L 40.5,-32.5 L 40.5,0 L -40.5,0 L -40.5,-32.5 L -38.5,-36 L -40.5,-39.5 L -44,-41 L -46,-42.5 L -46,-45.5 L -44,-47.5 L -33.5,-51 C -31.17,-52.42 -31.08,-54.17 -30,-56 C -28.92,-57.83 -27.75,-60.00 -27,-62 C -26.25,-64.00 -25.58,-66.17 -25.5,-68 C -25.42,-69.83 -26.00,-71.50 -26.5,-73 C -27.00,-74.50 -28.50,-75.67 -28.5,-77 C -28.50,-78.33 -26.58,-79.67 -26.5,-81 C -26.42,-82.33 -27.25,-83.83 -28,-85 C -28.75,-86.17 -29.67,-87.00 -31,-88 C -32.33,-89.00 -34.33,-89.83 -36,-91 C -37.67,-92.17 -39.50,-93.50 -41,-95 C -42.50,-96.50 -44.17,-98.33 -45,-100 L -46,-105 L -40,-108 L -33,-110 L -37,-111 C -38.83,-111.67 -42.08,-112.75 -44,-114 L -48.5,-118.5 L -43,-121 C -40.58,-121.58 -36.83,-122.00 -34,-122 C -31.17,-122.00 -26.67,-120.67 -26,-121 C -25.33,-121.33 -28.67,-122.83 -30,-124 C -31.33,-125.17 -32.83,-126.33 -34,-128 C -35.17,-129.67 -36.37,-131.67 -37,-134 C -37.63,-136.33 -37.97,-139.00 -37.8,-142 C -37.63,-145.00 -36.97,-148.50 -36,-152 C -35.03,-155.50 -33.67,-159.17 -32,-163 C -30.33,-166.83 -28.17,-171.33 -26,-175 C -23.83,-178.67 -21.50,-182.00 -19,-185 C -16.50,-188.00 -13.87,-190.50 -11,-193 C -8.13,-195.50 -3.33,-198.83 -1.8,-200 Z"/></g>
+<g class="detail" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.5" stroke-linecap="round">
+    <path d="M -27,-122 C -14,-117 14,-117 27,-122"/>
+    <path d="M -3,-118.5 C -14,-116 -26,-116 -34,-117"/>
+    <path d="M  3,-118.5 C  14,-116  26,-116  34,-117"/>
+    <path d="M -2,-115 C -8,-111 -16,-109 -24,-109"/>
+    <path d="M  2,-115 C   8,-111  16,-109  24,-109"/>
+    <path d="M -43,-103 C -28,-98 -14,-96.5 0,-96.5 C 14,-96.5 28,-98 43,-103"/>
+    <path d="M -27.5,-79 C -16,-75 16,-75 27.5,-79"/>
+    <path d="M -44.5,-44.3 L 44.5,-44.3"/>
+    <path d="M -39.5,-27 L 39.5,-27"/>
+    <circle cx="0" cy="-16" r="2.4" fill="#FFFFFF" fill-opacity="0.22" stroke="none"/>
+  </g>`;
+const AA_BALL_FINIAL_SVG = `<g class="finish" fill="#111111">
+    <!-- socket / lower collar -->
+    <path d="M-25,0 L-25,-12
+             Q-25,-16 -20,-18
+             L-18,-22
+             L18,-22
+             L20,-18
+             Q25,-16 25,-12
+             L25,0 Z"/>
+    <!-- upper collar / transition -->
+    <path d="M-21,-22
+             Q-23,-26 -18,-30
+             Q-14,-34 -10,-37
+             L10,-37
+             Q14,-34 18,-30
+             Q23,-26 21,-22 Z"/>
+    <!-- short neck -->
+    <path d="M-10,-37
+             Q-9,-42 -7,-46
+             L7,-46
+             Q9,-42 10,-37 Z"/>
+    <!-- spherical ball, slightly flattened at mount as in installed references -->
+    <path d="M0,-112
+             C25,-112 42,-94 42,-71
+             C42,-49 27,-32 8,-28
+             C5,-27 3,-26 0,-26
+             C-3,-26 -5,-27 -8,-28
+             C-27,-32 -42,-49 -42,-71
+             C-42,-94 -25,-112 0,-112 Z"/>
+  </g>
+<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2.2"
+     stroke-linecap="round" opacity="0.8">
+    <!-- restrained collar separation lines only; no photographic shading -->
+    <path d="M-18,-22 Q0,-18 18,-22"/>
+    <path d="M-10,-37 Q0,-34 10,-37"/>
+  </g>`;
+const AA_DOME_CAP_SVG = `<g class="finish" fill="#111111">
+   <!-- cylindrical slip-over skirt -->
+   <path d="M-38,0 L-38,-15
+            Q-38,-18 -34,-19
+            L34,-19
+            Q38,-18 38,-15
+            L38,0 Z"/>
+   <!-- small rim/lip -->
+   <path d="M-40,-19
+            Q-40,-23 -35,-25
+            L35,-25
+            Q40,-23 40,-19
+            Q20,-16 0,-16
+            Q-20,-16 -40,-19 Z"/>
+   <!-- hemispherical dome -->
+   <path d="M-34,-25
+            C-32,-44 -18,-57 0,-57
+            C18,-57 32,-44 34,-25
+            Q17,-22 0,-22
+            Q-17,-22 -34,-25 Z"/>
+ </g>
+<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2"
+    stroke-linecap="round" opacity="0.8">
+   <path d="M-34,-25 Q0,-20 34,-25"/>
+   <path d="M-34,-19 Q0,-16 34,-19"/>
+ </g>`;
+const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}], "bases": [{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
+const $ = id => document.getElementById(id);
+function fillSelect(id, items, labelFn) {
+  const sel=$(id); sel.innerHTML="";
+  items.forEach((x,i)=>{
+    const o=document.createElement("option");
+    o.value=i; o.textContent=labelFn?labelFn(x):x.label;
+    sel.appendChild(o);
+  });
+}
+fillSelect("blade",DATA.blades);
+fillSelect("bracket",DATA.brackets);
+fillSelect("finial",DATA.finials);
+fillSelect("post",DATA.posts);
+fillSelect("base",DATA.bases);
+fillSelect("config",DATA.configs,x=>x);
+$("blade").value="0";
+$("bracket").value="0";
+$("finial").value="2";
+$("post").value="0";
+$("base").value="0";
+$("config").value="0";
+function esc(s) {
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+function bladePath(x,y,w,h,shape) {
+  if(shape==="rectangle") return `<rect x="${x}" y="${y}" width="${w}" height="${h}"/>`;
+  if(shape==="capsule") return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${h/2}"/>`;
+  if(shape==="notched") {
+    const n=12; return `<path d="M ${x+n} ${y} H ${x+w-n} L ${x+w} ${y+h/2} L ${x+w-n} ${y+h} H ${x+n} L ${x} ${y+h/2} Z"/>`;
+  }
+  if(shape==="arch") {
+    return `<path d="M ${x+18} ${y+h} Q ${x+18} ${y+8} ${x+36} ${y+8} H ${x+w-36} Q ${x+w-18} ${y+8} ${x+w-18} ${y+h} Z"/>`;
+  }
+  if(shape==="crest") {
+    return `<path d="M ${x} ${y+h} V ${y+10} H ${x+w/2-30} Q ${x+w/2} ${y-8} ${x+w/2+30} ${y+10} H ${x+w} V ${y+h} Z"/>`;
+  }
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`;
+}
+function bracketMarkup(style, x, y, dir=1) {
+  if(style==="none") return "";
+  const s=dir;
+  if(style==="scroll") {
+    return `
+      <path d="M ${x} ${y} C ${x+55*s} ${y+4} ${x+70*s} ${y+38} ${x+92*s} ${y+20}"
+            fill="none" stroke="#111" stroke-width="8" stroke-linecap="round"/>
+      <path d="M ${x+40*s} ${y+12} C ${x+62*s} ${y+42} ${x+82*s} ${y+37} ${x+78*s} ${y+19}"
+            fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>`;
+  }
+  return `
+    <path d="M ${x} ${y} H ${x+86*s}" fill="none" stroke="#111" stroke-width="9" stroke-linecap="round"/>
+    <path d="M ${x+30*s} ${y} C ${x+45*s} ${y+35} ${x+62*s} ${y+35} ${x+78*s} ${y+10}"
+          fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${x+55*s}" cy="${y+20}" r="6" fill="none" stroke="#111" stroke-width="4"/>`;
+}
+function finialMarkup(style) {
+  if(style==="spear") return `
+    <path d="M450 72 L432 104 L445 101 L450 125 L455 101 L468 104 Z" fill="#111"/>
+    <circle cx="450" cy="126" r="9" fill="#111"/>`;
+  return `
+    <ellipse cx="450" cy="101" rx="16" ry="23" fill="#111"/>
+    <path d="M442 78 Q450 62 458 78" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"/>
+    <path d="M435 101 Q450 91 465 101 M437 111 Q450 101 463 111" fill="none" stroke="#333" stroke-width="3"/>
+    <rect x="438" y="122" width="24" height="10" rx="3" fill="#111"/>`;
+}
+function baseMarkup(style) {
+  if(style==="short") return `
+    <rect x="420" y="515" width="60" height="18" rx="5" fill="#111"/>
+    <rect x="410" y="532" width="80" height="15" rx="4" fill="#111"/>`;
+  return `
+    <path d="M423 505 L477 505 L486 548 L414 548 Z" fill="#111"/>
+    <rect x="405" y="547" width="90" height="16" rx="4" fill="#111"/>
+    <path d="M425 515 H475 M421 530 H479" stroke="#424242" stroke-width="4"/>`;
+}
+function updateStreetControls() {
+  const no1 = $("noStreet1").checked;
+  const no2 = $("noStreet2").checked;
+  $("street1").disabled = no1;
+  $("street2").disabled = no2;
+  $("street1").style.opacity = no1 ? ".45" : "1";
+  $("street2").style.opacity = no2 ? ".45" : "1";
+}
+function render() {
+  const blade=DATA.blades[+$("blade").value];
+  let bracket=DATA.brackets[+$("bracket").value];
+  const finial=DATA.finials[+$("finial").value];
+  const post=DATA.posts[+$("post").value];
+  const base=DATA.bases[+$("base").value];
+  const config=DATA.configs[+$("config").value];
+  const face=$("face").value, letters=$("letters").value;
+  const noStreet1=$("noStreet1").checked;
+  const noStreet2=$("noStreet2").checked;
+  const s1=$("street1").value || "STREET NAME";
+  const s2=$("street2").value || "";
+  updateStreetControls();
+  // Keep bracket size compatible with blade size.
+  if(bracket.style!=="none" && bracket.size !== blade.size) {
+    const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
+    if(match>=0) { $("bracket").value=match; bracket=DATA.brackets[match]; }
+  }
+  // -------------------------
+  // Dimension-driven geometry
+  // -------------------------
+  // Catalog post lengths: 12' / 13' = 144 / 156 in.
+  const postIn = post.height==="13 ft" ? 156 : 144;
+  const baseIn = base.style==="short" ? 8.25 : (base.style==="sb46" ? 29 : 27);
+  const bladeWIn = blade.size==="36" ? 36 : 30;
+  // Blade heights from catalog dimensions.
+  const dims = blade.dims.split("x").map(x=>parseFloat(x.trim()));
+  const bladeHIn = dims[1];
+  // v0.2: one uniform local scale for visible hardware; full post height is shown with a break.
+  const pxPerIn = 5.0;
+  const groundY = 552;
+  const postX = 450;
+  const postPxW = (post.profile==="square4" ? 4 : 2.375)*pxPerIn;
+  const basePxH = baseIn*pxPerIn;
+  const bladePxW = bladeWIn*pxPerIn;
+  const bladePxH = bladeHIn*pxPerIn;
+  const postTopY = 110;
+  const topSectionBottomY = 330;
+  const lowerSectionTopY = 455;
+  // CPC catalog imagery places the blades near the very top of the post,
+  // immediately below the finial. We use a small real-world clearance.
+  const finialBottomY = postTopY + 8;
+  const topBladeCenterY = finialBottomY + (1.5*pxPerIn) + bladePxH/2;
+  const secondBladeCenterY = topBladeCenterY + bladePxH + (1.5*pxPerIn);
+  // Readable 2D convention: both are true 9x30 blades, offset around the post rather than stacked.
+  let b1cx = postX - bladePxW*0.32, b2cx = postX + bladePxW*0.32;
+  let b1cy = topBladeCenterY, b2cy = secondBladeCenterY;
+  if(config==="Inverted") {
+    [b1cy,b2cy] = [b2cy,b1cy];
+    [b1cx,b2cx] = [postX + bladePxW*0.32, postX - bladePxW*0.32];
+  }
+  if(config==="Offset") {
+    b1cx = postX - bladePxW*0.38;
+    b2cx = postX + bladePxW*0.38;
+  }
+  const x1=b1cx-bladePxW/2, y1=b1cy-bladePxH/2;
+  const x2=b2cx-bladePxW/2, y2=b2cy-bladePxH/2;
+  const blade1 = bladePath(x1,y1,bladePxW,bladePxH,blade.shape);
+  const blade2 = bladePath(x2,y2,bladePxW,bladePxH,blade.shape);
+  const textSize = 5.2*pxPerIn;
+  // Bracket anchor positions are tied to the blade centerlines.
+  let bracket1="", bracket2="";
+  if(config==="Offset") {
+    bracket1 = noStreet1 ? "" : bracketMarkup(bracket.style,postX,b1cy,-1);
+    bracket2 = noStreet2 ? "" : bracketMarkup(bracket.style,postX,b2cy,1);
+  } else {
+    bracket1 = noStreet1 ? "" : bracketMarkup(bracket.style,postX,b1cy,1);
+    bracket2 = noStreet2 ? "" : bracketMarkup(bracket.style,postX,b2cy,-1);
+  }
+  // Scale the tall/short base to catalog-relative height.
+  const baseTopY = groundY-basePxH;
+  let baseSvg;
+  if(base.style==="short") {
+    baseSvg = `
+      <rect x="${postX-16}" y="${baseTopY}" width="32" height="${basePxH-8}" rx="5" fill="#111"/>
+      <rect x="${postX-34}" y="${groundY-10}" width="68" height="10" rx="3" fill="#111"/>`;
+  } else if(base.style==="sb46") {
+    // Placeholder silhouette until the dedicated SB46 vector is built.
+    baseSvg = `
+      <path d="M ${postX-19} ${baseTopY}
+               L ${postX+19} ${baseTopY}
+               L ${postX+20} ${groundY-20}
+               L ${postX-20} ${groundY-20} Z" fill="#111"/>
+      <path d="M ${postX-28} ${baseTopY+16} H ${postX+28}
+               M ${postX-24} ${groundY-52} H ${postX+24}" stroke="#3a3a3a" stroke-width="4"/>
+      <rect x="${postX-36}" y="${groundY-20}" width="72" height="9" rx="2" fill="#111"/>
+      <rect x="${postX-43}" y="${groundY-11}" width="86" height="11" rx="2" fill="#111"/>`;
+  } else {
+    // TCP Corinthian base — refined 27 in decorative sleeve.
+    // Narrower, layered silhouette based on the catalog + installed field references.
+    baseSvg = `
+      <g aria-label="TCP Corinthian Base">
+        <!-- top cap and collar -->
+        <ellipse cx="${postX}" cy="${baseTopY+4}" rx="20" ry="4" fill="#111"/>
+        <path d="M ${postX-19} ${baseTopY+5} H ${postX+19}
+                 L ${postX+16} ${baseTopY+13} H ${postX-16} Z" fill="#111"/>
+        <ellipse cx="${postX}" cy="${baseTopY+15}" rx="22" ry="5" fill="#111"/>
+        <path d="M ${postX-16} ${baseTopY+17}
+                 Q ${postX-20} ${baseTopY+23} ${postX-14} ${baseTopY+30}
+                 L ${postX-11} ${baseTopY+37} H ${postX+11}
+                 L ${postX+14} ${baseTopY+30}
+                 Q ${postX+20} ${baseTopY+23} ${postX+16} ${baseTopY+17} Z" fill="#111"/>
+        <!-- long fluted shaft -->
+        <path d="M ${postX-11} ${baseTopY+35} H ${postX+11}
+                 L ${postX+10} ${groundY-57} H ${postX-10} Z" fill="#111"/>
+        <path d="M ${postX-6} ${baseTopY+39} L ${postX-5} ${groundY-61}
+                 M ${postX} ${baseTopY+38} L ${postX} ${groundY-60}
+                 M ${postX+6} ${baseTopY+39} L ${postX+5} ${groundY-61}"
+              fill="none" stroke="#4b4b4b" stroke-width="1.5" opacity=".8"/>
+        <!-- Corinthian lower ornament -->
+        <path d="M ${postX-10} ${groundY-60}
+                 Q ${postX-18} ${groundY-55} ${postX-17} ${groundY-49}
+                 Q ${postX-15} ${groundY-44} ${postX-9} ${groundY-41}
+                 Q ${postX-18} ${groundY-36} ${postX-17} ${groundY-30}
+                 Q ${postX-14} ${groundY-24} ${postX-8} ${groundY-21}
+                 H ${postX+8}
+                 Q ${postX+14} ${groundY-24} ${postX+17} ${groundY-30}
+                 Q ${postX+18} ${groundY-36} ${postX+9} ${groundY-41}
+                 Q ${postX+15} ${groundY-44} ${postX+17} ${groundY-49}
+                 Q ${postX+18} ${groundY-55} ${postX+10} ${groundY-60} Z" fill="#111"/>
+        <path d="M ${postX} ${groundY-57}
+                 Q ${postX-7} ${groundY-50} ${postX-12} ${groundY-48}
+                 Q ${postX-5} ${groundY-44} ${postX} ${groundY-39}
+                 Q ${postX+5} ${groundY-44} ${postX+12} ${groundY-48}
+                 Q ${postX+7} ${groundY-50} ${postX} ${groundY-57}
+                 M ${postX-12} ${groundY-33} Q ${postX} ${groundY-27} ${postX+12} ${groundY-33}"
+              fill="none" stroke="#505050" stroke-width="1.7" opacity=".85"/>
+        <!-- stepped foot -->
+        <ellipse cx="${postX}" cy="${groundY-20}" rx="22" ry="5" fill="#111"/>
+        <path d="M ${postX-23} ${groundY-19} H ${postX+23} L ${postX+27} ${groundY-12} H ${postX-27} Z" fill="#111"/>
+        <ellipse cx="${postX}" cy="${groundY-10}" rx="30" ry="5" fill="#111"/>
+        <path d="M ${postX-31} ${groundY-9} H ${postX+31} L ${postX+35} ${groundY-3} H ${postX-35} Z" fill="#111"/>
+        <ellipse cx="${postX}" cy="${groundY-2}" rx="36" ry="4" fill="#0b0b0b"/>
+        <!-- restrained highlights to keep black detail readable in proofs -->
+        <path d="M ${postX-15} ${baseTopY+14} H ${postX+15}
+                 M ${postX-11} ${baseTopY+35} H ${postX+11}
+                 M ${postX-18} ${groundY-20} H ${postX+18}
+                 M ${postX-25} ${groundY-10} H ${postX+25}"
+              fill="none" stroke="#555" stroke-width="1.2" opacity=".75"/>
+      </g>`;
+  }
+  // Place finial immediately above post top.
+  let finialSvg;
+  if(finial.style==="pineapple") {
+    const scale=38/200;
+    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_PINEAPPLE_FINIAL_SVG}</g>`;
+  } else if(finial.style==="ball") {
+    const scale=31/118;
+    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_BALL_FINIAL_SVG}</g>`;
+  } else if(finial.style==="dome") {
+    const scale=18/58;
+    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_DOME_CAP_SVG}</g>`;
+  } else {
+    finialSvg=`
+      <path d="M${postX} ${postTopY-38} L${postX-13} ${postTopY-12} L${postX-4} ${postTopY-15}
+               L${postX} ${postTopY+4} L${postX+4} ${postTopY-15} L${postX+13} ${postTopY-12} Z" fill="#111"/>
+      <circle cx="${postX}" cy="${postTopY+4}" r="6" fill="#111"/>`;
+  }
+  $("assembly").innerHTML = `
+    ${baseSvg}
+    <rect x="${postX-postPxW/2}" y="${lowerSectionTopY}" width="${postPxW}" height="${groundY-lowerSectionTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>
+    <rect x="${postX-postPxW/2}" y="${postTopY}" width="${postPxW}" height="${topSectionBottomY-postTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>
+    <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+          fill="none" stroke="#6b7280" stroke-width="2"/>
+    <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+          fill="none" stroke="#6b7280" stroke-width="2"/>
+    ${finialSvg}
+    ${bracket1} ${bracket2}
+    <g fill="${face}" stroke="#111" stroke-width="2.5">${noStreet1 ? "" : blade1}${noStreet2 ? "" : blade2}</g>
+    <g fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2">
+      ${noStreet1 ? "" : `<line x1="${x1+2}" y1="${y1+4}" x2="${x1+bladePxW-2}" y2="${y1+4}"/>
+      <line x1="${x1+2}" y1="${y1+bladePxH-4}" x2="${x1+bladePxW-2}" y2="${y1+bladePxH-4}"/>`}
+      ${noStreet2 ? "" : `<line x1="${x2+2}" y1="${y2+4}" x2="${x2+bladePxW-2}" y2="${y2+4}"/>
+      <line x1="${x2+2}" y1="${y2+bladePxH-4}" x2="${x2+bladePxW-2}" y2="${y2+bladePxH-4}"/>`}
+    </g>
+    ${noStreet1 ? "" : `<text x="${b1cx}" y="${b1cy+textSize/3}" text-anchor="middle"
+          font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s1)}</text>`}
+    ${noStreet2 ? "" : `<text x="${b2cx}" y="${b2cy+textSize/3}" text-anchor="middle"
+          font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s2)}</text>`}
+    <text x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
+          font-family="Arial,sans-serif" font-size="14" fill="#68707b">${post.height} post, shown broken</text>
+  `
+  $("proofTitle").textContent=$("job").value || "Street Name System";
+  $("proofMeta").textContent=$("customer").value || "";
+  $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : `${blade.label} — ${blade.dims}`;
+  $("sumBracket").textContent=`${bracket.sku} — ${bracket.label}`;
+  $("sumPost").textContent=`${post.sku} — ${post.label}`;
+  $("sumFinial").textContent=`${finial.sku} — ${finial.label}`;
+  $("sumBase").textContent=`${base.sku} — ${base.label}`;
+  $("sumConfig").textContent=config;
+}
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",render));
+render();
+function exportSVG() {
+  const svg=$("proof").cloneNode(true);
+  const serializer=new XMLSerializer();
+  let src=serializer.serializeToString(svg);
+  if(!src.match(/^<svg[^>]+xmlns=/)) src=src.replace(/^<svg/,'<svg xmlns="http://www.w3.org/2000/svg"');
+  const blob=new Blob([src],{type:"image/svg+xml;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="AA_Street_Name_Proof.svg";
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+</script>
+</body>
+</html>
