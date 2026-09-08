@@ -15,7 +15,7 @@ header{background:#111;color:#fff;padding:18px 24px;display:flex;align-items:cen
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:42px;height:42px;border:3px solid var(--aa);border-radius:8px;display:grid;place-items:center;font-weight:800;color:var(--aa)}
 h1{font-size:20px;margin:0} .sub{font-size:12px;color:#b8bec7;margin-top:3px}
-.badge{font-size:12px;border:1px solid #444;border-radius:999px;padding:6px 10px;color:#ddd}
+.badge{font-size:12px;border:1px solid #444;border-radius:999px;padding:6px 10px;color:#ddd;white-space:nowrap}
 .app{display:grid;grid-template-columns:360px 1fr;min-height:calc(100vh - 78px)}
 .controls{background:#fff;border-right:1px solid var(--line);padding:20px;overflow:auto}
 .previewWrap{padding:24px;display:flex;flex-direction:column;gap:16px}
@@ -53,7 +53,7 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <div class="logo">AA</div>
     <div><h1>AA Proof Generator</h1><div class="sub">Street Name System — Prototype v0.7</div></div>
   </div>
-  <div class="badge">Source-backed CPC workflow</div>
+  <div class="badge" title="Current app version and latest main-branch commit"><span id="buildInfo">v0.7 · main</span></div>
 </header>
 <div class="app">
 <aside class="controls">
@@ -509,6 +509,25 @@ function render() {
 }
 document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",render));
 render();
+async function updateBuildInfo() {
+  const el=$("buildInfo");
+  if(!el) return;
+  try {
+    const r=await fetch("https://api.github.com/repos/AAccents/couyon/commits/main",{cache:"no-store"});
+    if(!r.ok) throw new Error("GitHub commit lookup unavailable");
+    const j=await r.json();
+    const short=(j.sha||"").slice(0,7);
+    el.textContent=short ? `v0.7 · ${short}` : "v0.7 · main";
+    if(j.html_url) {
+      el.style.cursor="pointer";
+      el.onclick=()=>window.open(j.html_url,"_blank","noopener,noreferrer");
+    }
+  } catch(e) {
+    el.textContent="v0.7 · main";
+  }
+}
+updateBuildInfo();
+
 function exportSVG() {
   const svg=$("proof").cloneNode(true);
   const serializer=new XMLSerializer();
