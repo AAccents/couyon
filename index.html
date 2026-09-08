@@ -20,7 +20,7 @@ h1{font-size:20px;margin:0} .sub{font-size:12px;color:#b8bec7;margin-top:3px}
 .controls{background:#fff;border-right:1px solid var(--line);padding:20px;overflow:auto}
 .previewWrap{padding:24px;display:flex;flex-direction:column;gap:16px}
 .section{margin-bottom:20px}
-.section h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px;color:#444}
+.section h2{font-size:13px;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:.11em;margin:0 0 12px;color:#17191c;border:2px solid #c9cfd6;border-radius:8px;background:#f3f5f7;padding:8px 10px}
 label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
 input,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -59,8 +59,6 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
 <aside class="controls">
   <div class="section">
     <h2>Job</h2>
-    <label>Customer / Development</label>
-    <input id="customer" value="Sample Development">
     <label>Proof Title</label>
     <input id="job" value="Street Name System">
   </div>
@@ -78,17 +76,16 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
       <input id="noStreet2" type="checkbox" style="width:auto;padding:0;margin:0">
       No cross street
     </label>
+    <div class="row2">
+      <div><label>Blade Style</label><select id="blade"></select></div>
+      <div><label>Configuration</label><select id="config"></select></div>
+    </div>
   </div>
   <div class="section">
     <h2>System</h2>
-    <label>Blade Style</label>
-    <select id="blade"></select>
     <label>Bracket</label>
     <select id="bracket"></select>
-    <div class="row2">
-      <div><label>Finial</label><select id="finial"></select></div>
-      <div><label>Configuration</label><select id="config"></select></div>
-    </div>
+    <label>Finial</label><select id="finial"></select>
     <label>Post</label><select id="post"></select>
     <label>Base</label><select id="base"></select>
   </div>
@@ -118,7 +115,7 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <button class="secondary" onclick="exportSVG()">Export SVG</button>
   </div>
   <div class="note">
-    v0.7 refinement: street-name blades raised closer to the finial; TCP Corinthian base redrawn with a narrower, layered 27 in silhouette. Previous component pass: TCP Standard defaults to the 2 3/8 Black Powder Post, Corinthian Base, and Dome Cap. Rouzan-style 4 in Square Post and SB46 Base are selectable placeholders until their dedicated vectors are built.
+    v0.7 UI/component refinement: added a galvanized U-channel post vector based on the supplied front-view references; removed the Customer / Development field; moved Blade Style and Configuration into Street Names; and strengthened the main section headers. TCP Standard defaults remain the 2 3/8 Black Powder Post, Corinthian Base, and Dome Cap. Rouzan-style 4 in Square Post and SB46 Base are selectable placeholders until their dedicated vectors are built.
   </div>
 </aside>
 <main class="previewWrap">
@@ -126,7 +123,6 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <div class="proofHeader">
       <div>
         <strong id="proofTitle">Street Name System</strong>
-        <div class="meta" id="proofMeta">Sample Development</div>
       </div>
       <div style="text-align:right">
         <strong>ALUMINUM ACCENTS</strong>
@@ -234,7 +230,7 @@ const AA_DOME_CAP_SVG = `<g class="finish" fill="#111111">
    <path d="M-34,-25 Q0,-20 34,-25"/>
    <path d="M-34,-19 Q0,-16 34,-19"/>
  </g>`;
-const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}], "bases": [{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
+const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
 const $ = id => document.getElementById(id);
 function fillSelect(id, items, labelFn) {
   const sel=$(id); sel.innerHTML="";
@@ -316,6 +312,28 @@ function updateStreetControls() {
   $("street1").style.opacity = no1 ? ".45" : "1";
   $("street2").style.opacity = no2 ? ".45" : "1";
 }
+function uChannelPostMarkup(x,y,h,w=22) {
+  const webW=w*0.48;
+  const flangeW=(w-webW)/2;
+  const holeR=Math.max(2.1,w*0.12);
+  const spacing=Math.max(26,w*1.5);
+  let holes="";
+  for(let cy=y+18; cy<y+h-12; cy+=spacing) {
+    holes += `<circle cx="${x}" cy="${cy}" r="${holeR}" fill="#f4f6f8" stroke="#6f767d" stroke-width="1"/>`;
+  }
+  return `
+    <g aria-label="Galvanized U-Channel Post">
+      <rect x="${x-w/2}" y="${y}" width="${w}" height="${h}" fill="#aeb5bb"/>
+      <rect x="${x-webW/2}" y="${y}" width="${webW}" height="${h}" fill="#c7ccd0"/>
+      <rect x="${x-w/2}" y="${y}" width="${flangeW}" height="${h}" fill="#969ea5"/>
+      <rect x="${x+w/2-flangeW}" y="${y}" width="${flangeW}" height="${h}" fill="#969ea5"/>
+      <path d="M ${x-webW/2} ${y} V ${y+h} M ${x+webW/2} ${y} V ${y+h}"
+            stroke="#7f878e" stroke-width="1.3" opacity=".85"/>
+      <path d="M ${x-w/2+2} ${y} V ${y+h} M ${x+w/2-2} ${y} V ${y+h}"
+            stroke="#d9dde0" stroke-width="1" opacity=".7"/>
+      ${holes}
+    </g>`;
+}
 function render() {
   const blade=DATA.blades[+$("blade").value];
   let bracket=DATA.brackets[+$("bracket").value];
@@ -348,7 +366,7 @@ function render() {
   const pxPerIn = 5.0;
   const groundY = 552;
   const postX = 450;
-  const postPxW = (post.profile==="square4" ? 4 : 2.375)*pxPerIn;
+  const postPxW = post.profile==="square4" ? 4*pxPerIn : (post.profile==="uchannel" ? 22 : 2.375*pxPerIn);
   const basePxH = baseIn*pxPerIn;
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
@@ -474,10 +492,16 @@ function render() {
                L${postX} ${postTopY+4} L${postX+4} ${postTopY-15} L${postX+13} ${postTopY-12} Z" fill="#111"/>
       <circle cx="${postX}" cy="${postTopY+4}" r="6" fill="#111"/>`;
   }
+  const lowerPostSvg = post.profile==="uchannel"
+    ? uChannelPostMarkup(postX,lowerSectionTopY,groundY-lowerSectionTopY,postPxW)
+    : `<rect x="${postX-postPxW/2}" y="${lowerSectionTopY}" width="${postPxW}" height="${groundY-lowerSectionTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>`;
+  const upperPostSvg = post.profile==="uchannel"
+    ? uChannelPostMarkup(postX,postTopY,topSectionBottomY-postTopY,postPxW)
+    : `<rect x="${postX-postPxW/2}" y="${postTopY}" width="${postPxW}" height="${topSectionBottomY-postTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>`;
   $("assembly").innerHTML = `
     ${baseSvg}
-    <rect x="${postX-postPxW/2}" y="${lowerSectionTopY}" width="${postPxW}" height="${groundY-lowerSectionTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>
-    <rect x="${postX-postPxW/2}" y="${postTopY}" width="${postPxW}" height="${topSectionBottomY-postTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>
+    ${lowerPostSvg}
+    ${upperPostSvg}
     <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
           fill="none" stroke="#6b7280" stroke-width="2"/>
     <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
@@ -499,7 +523,6 @@ function render() {
           font-family="Arial,sans-serif" font-size="14" fill="#68707b">${post.height} post, shown broken</text>
   `
   $("proofTitle").textContent=$("job").value || "Street Name System";
-  $("proofMeta").textContent=$("customer").value || "";
   $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : `${blade.label} — ${blade.dims}`;
   $("sumBracket").textContent=`${bracket.sku} — ${bracket.label}`;
   $("sumPost").textContent=`${post.sku} — ${post.label}`;
