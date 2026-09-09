@@ -32,6 +32,9 @@ h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 4px;c
 .cell{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;
   display:flex;flex-direction:column}
 .cell.flag{border-color:#e9b384;box-shadow:0 0 0 2px #f6dcc4 inset}
+.cell.bad{border-color:#e2a0a0;box-shadow:0 0 0 2px #f3cccc inset}
+.cell.skip{opacity:.55}
+.skipmsg{padding:22px 12px;font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
 .cap{padding:8px 10px;border-bottom:1px solid var(--line);font-size:11px;line-height:1.35}
 .cap b{display:block;font-size:12px}
 .cap span{color:var(--muted)}
@@ -165,6 +168,103 @@ function grab(viewBox) {
   return svg;
 }
 
+/* ---------------------------------------------------------------------------
+   Mounting invariant.
+
+   Measures the RENDERED OUTPUT rather than re-deriving geometry: the assembly
+   is rasterised three times through the same SVG the app produced — once with
+   the finial removed, once with the post removed, once whole — using the
+   data-part hooks the renderer emits. The checks are then purely about pixels:
+
+     ENTERS   the post is actually present above the mating plane
+     NO GAP   no empty scanline anywhere across the joint
+     COVERED  the finial silhouette is at least as wide as the post at every
+              depth the post is inside it
+
+   A failure here means the joint no longer reads as installed hardware,
+   whatever the numbers in the renderer say.
+--------------------------------------------------------------------------- */
+
+const SS = 8;              // raster samples per SVG user unit
+const CLEAR_TOL = -0.20;   // user units of slack for antialiasing
+
+async function silhouette(svgEl, dropParts, win) {
+  const s = svgEl.cloneNode(true);
+  s.querySelectorAll('defs').forEach(d => d.remove());
+  const bg = s.querySelector(':scope > rect');   // page-coloured backdrop
+  if (bg) bg.remove();
+  dropParts.forEach(part =>
+    s.querySelectorAll('[data-part="' + part + '"]').forEach(n => n.remove()));
+  s.setAttribute('viewBox', win.x + ' ' + win.y + ' ' + win.w + ' ' + win.h);
+  const W = Math.round(win.w * SS), H = Math.round(win.h * SS);
+  s.setAttribute('width', W); s.setAttribute('height', H);
+  const src = new XMLSerializer().serializeToString(s);
+  const img = new Image();
+  await new Promise((res, rej) => {
+    img.onload = res; img.onerror = rej;
+    img.src = 'data:image/svg+xml;base64,' +
+      btoa(unescape(encodeURIComponent(src)));
+  });
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+  const d = g.getImageData(0, 0, W, H).data;
+  const rows = new Float64Array(H);
+  for (let py = 0; py < H; py++) {
+    let lo = -1, hi = -1;
+    for (let px = 0; px < W; px++) {
+      if (d[(py * W + px) * 4 + 3] > 128) { if (lo < 0) lo = px; hi = px; }
+    }
+    rows[py] = lo < 0 ? 0 : (hi - lo + 1) / SS;
+  }
+  return rows;
+}
+
+async function mountInvariant(svgEl, dbg) {
+  if (dbg.matingY == null || dbg.finialScale == null) return null;  // no finial mounted
+  const win = { x: 410, y: dbg.matingY - 26, w: 80, h: 36 };        // stops short of the blades
+  const row = y => Math.round((y - win.y) * SS);
+
+  const postRows   = await silhouette(svgEl, ['finial'], win);
+  const finialRows = await silhouette(svgEl, ['post-upper', 'post-lower', 'base'], win);
+  const allRows    = await silhouette(svgEl, [], win);
+
+  const rTop  = row(dbg.spineTop);
+  const rMate = row(dbg.matingY);
+
+  let gap = false;
+  for (let r = Math.max(0, rTop - SS); r <= Math.min(allRows.length - 1, rMate + 2 * SS); r++) {
+    if (allRows[r] <= 0) gap = true;
+  }
+
+  // The covered band is [spineTop, matingY) — the mating plane row itself is
+  // where the collar legitimately ends and the post below it is meant to be
+  // exposed, so it is not part of "the post is inside the collar".
+  let postAbove = false, minClear = Infinity;
+  for (let r = Math.max(0, rTop); r < Math.min(postRows.length, rMate); r++) {
+    if (postRows[r] > 0) {
+      postAbove = true;
+      minClear = Math.min(minClear, finialRows[r] - postRows[r]);
+    }
+  }
+  if (!isFinite(minClear)) minClear = null;
+
+  // The post must ALSO emerge at full width immediately below the collar rim.
+  // A taper there — the old rx = w/2 dome — is exactly the pinch that made an
+  // installed finial read as two stacked objects, and it sits just outside the
+  // covered band, so it needs its own check.
+  let emergeMin = Infinity;
+  for (let r = rMate + 1; r <= Math.min(postRows.length - 1, rMate + Math.round(1.5 * SS)); r++) {
+    emergeMin = Math.min(emergeMin, postRows[r]);
+  }
+  const emerges = isFinite(emergeMin) && emergeMin >= dbg.postPxW - 0.35;
+
+  const enters = dbg.embedPx > 0.05 && postAbove;
+  return {
+    enters, gap, minClear, emerges, emergeMin: isFinite(emergeMin) ? emergeMin : null,
+    pass: enters && emerges && !gap && minClear !== null && minClear >= CLEAR_TOL
+  };
+}
+
 function ratioClass(r, target) {
   if (r == null) return '';
   const d = Math.abs(r - target) / target;
@@ -173,7 +273,7 @@ function ratioClass(r, target) {
   return 'r-bad';
 }
 
-function cell(caption, sub, svg, dbg, target) {
+function cell(caption, sub, svg, dbg, target, inv) {
   const c = document.createElement('div');
   c.className = 'cell';
 
@@ -206,6 +306,29 @@ function cell(caption, sub, svg, dbg, target) {
     }
     m.appendChild(left); m.appendChild(right);
     c.appendChild(m);
+  }
+  if (inv) {
+    const v = document.createElement('div');
+    v.className = 'metrics';
+    const l = document.createElement('span'), r = document.createElement('span');
+    l.textContent = 'mount';
+    if (inv.pass) {
+      r.className = 'r-ok';
+      r.textContent = 'PASS  clear ' + inv.minClear.toFixed(2);
+    } else {
+      r.className = 'r-bad';
+      const why = [];
+      if (!inv.enters) why.push('no entry');
+      if (inv.gap) why.push('gap');
+      if (!inv.emerges) why.push('pinched below rim ' +
+        (inv.emergeMin === null ? '' : inv.emergeMin.toFixed(2)));
+      if (inv.minClear !== null && inv.minClear < CLEAR_TOL) why.push('clear ' + inv.minClear.toFixed(2));
+      if (inv.minClear === null && inv.enters) why.push('no covered band');
+      r.textContent = 'FAIL  ' + (why.join(', ') || 'unknown');
+      c.classList.add('bad');
+    }
+    v.appendChild(l); v.appendChild(r);
+    c.appendChild(v);
   }
   return c;
 }
@@ -266,25 +389,49 @@ async function build() {
   toggle('noStreet1', hideBlades);
   toggle('noStreet2', hideBlades);
 
-  let flagged = 0, total = 0;
+  let flagged = 0, total = 0, skipped = 0, invTotal = 0, invFail = 0;
 
   // ---- finial x post -----------------------------------------------------
   const s1 = section(
     'Finial × post',
     'Socket-driven scale: every finial is scaled so its mating plane matches the post it ' +
     'sits on. "socket" is the rendered mating width as a multiple of post width — it ' +
-    'should read ' + TARGET.toFixed(2) + 'x in every cell, on every post.');
+    'should read ' + TARGET.toFixed(2) + 'x in every cell, on every post. "mount" is the ' +
+    'measured mounting invariant: the post must actually enter the collar, there must be no ' +
+    'empty scanline across the joint, and the finial must stay at least as wide as the post ' +
+    'everywhere the post is inside it, and the post must emerge at full width just below the ' +
+    'collar rim. "clear" is the tightest margin in SVG user units.');
   const g1 = grid(cols);
 
   for (let f = 0; f < FINIALS.length; f++) {
     for (let p = 0; p < POSTS.length; p++) {
-      choose('finial', f);
+      // Post first: the renderer may reject a finial for this post, and we want
+      // to observe that rather than fight it.
       choose('post', p);
+      choose('finial', f);
+      const actualF = +D().getElementById('finial').value;
+      if (actualF !== f) {
+        // Configuration refused by the renderer (u-channel carries no decorative
+        // finial). Not a rendering defect, so it is not scored.
+        skipped++;
+        const c = document.createElement('div');
+        c.className = 'cell skip';
+        c.innerHTML = '<div class="cap"><b></b><span></span></div>' +
+                      '<div class="skipmsg">not a valid configuration<br>' +
+                      'decorative finials are not offered on this post</div>';
+        c.querySelector('b').textContent = FINIALS[f];
+        c.querySelector('span').textContent = POSTS[p];
+        g1.appendChild(c);
+        continue;
+      }
       const dbg = Object.assign({}, W().__proofDebug);
       const svg = grab(view);
+      const inv = await mountInvariant(D().getElementById('proof'), dbg);
+      if (me !== runId) return;
       total++;
       if (dbg.mateRatio != null && ratioClass(dbg.mateRatio, TARGET) === 'r-bad') flagged++;
-      g1.appendChild(cell(FINIALS[f], POSTS[p], svg, dbg, TARGET));
+      if (inv) { invTotal++; if (!inv.pass) invFail++; }
+      g1.appendChild(cell(FINIALS[f], POSTS[p], svg, dbg, TARGET, inv));
     }
   }
   s1.appendChild(g1);
@@ -317,10 +464,13 @@ async function build() {
 
   const okCount = total - flagged;
   status.innerHTML =
-    '<strong>' + total + '</strong> finial/post combinations rendered — ' +
+    '<strong>' + total + '</strong> valid finial/post combinations — sizing: ' +
     '<span class="' + (flagged ? 'fail' : 'pass') + '">' +
     (flagged ? flagged + ' outside tolerance' : okCount + ' within tolerance') +
-    '</span>. Target socket ratio ' + TARGET.toFixed(2) + 'x.';
+    '</span> at ' + TARGET.toFixed(2) + 'x. Mounting invariant: ' +
+    '<span class="' + (invFail ? 'fail' : 'pass') + '">' +
+    (invFail ? invFail + ' of ' + invTotal + ' FAIL' : invTotal + ' pass') +
+    '</span>.' + (skipped ? ' ' + skipped + ' invalid configurations skipped.' : '');
 }
 
 document.getElementById('zoom').addEventListener('change', build);

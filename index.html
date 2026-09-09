@@ -262,11 +262,14 @@ const AA_SPEAR_FINIAL_SVG = `<g class="finish" fill="#111111">
 // ---------------------------------------------------------------------------
 const COLLAR_RATIO = 1.10;   // slip-fit hardware sits slightly proud of the post
 
+// embedDepth is the depth of each asset's straight-sided collar, measured off the
+// rendered silhouette (the run below the first flare, in asset units). It is how
+// far the post continues up inside the collar. Per asset, never per pair.
 const FINIAL_ASSETS = {
-  pineapple: { svg: AA_PINEAPPLE_FINIAL_SVG, mateWidth: 81 },
-  ball:      { svg: AA_BALL_FINIAL_SVG,      mateWidth: 50 },
-  dome:      { svg: AA_DOME_CAP_SVG,         mateWidth: 76 },
-  spear:     { svg: AA_SPEAR_FINIAL_SVG,     mateWidth: 60 },
+  pineapple: { svg: AA_PINEAPPLE_FINIAL_SVG, mateWidth: 81, embedDepth: 34.25 },
+  ball:      { svg: AA_BALL_FINIAL_SVG,      mateWidth: 50, embedDepth: 14.75 },
+  dome:      { svg: AA_DOME_CAP_SVG,         mateWidth: 76, embedDepth: 17.50 },
+  spear:     { svg: AA_SPEAR_FINIAL_SVG,     mateWidth: 60, embedDepth: 16.75 },
 };
 
 // Scale an asset so its mating plane matches the post it sits on.
@@ -339,6 +342,34 @@ function updateStreetControls() {
   $("street1").style.opacity = no1 ? ".45" : "1";
   $("street2").style.opacity = no2 ? ".45" : "1";
 }
+// ---------------------------------------------------------------------------
+// A vertical post segment with independently controlled end radii.
+//
+// The old code drew every segment as a rect with rx = width/2, which domes BOTH
+// ends of every segment — including the end that belongs inside a finial collar
+// and the two ends exposed by the break. A post that tapers to a point exactly
+// at the mating plane is what made an installed finial read as a stacked object.
+//
+// r = w/2 reproduces the old fully-domed end; r = 0 is a flat cut. Cap an end
+// only where it is genuinely exposed.
+// ---------------------------------------------------------------------------
+function postSegment(cx, y, h, w, rTop, rBot) {
+  const x0 = cx - w/2, x1 = cx + w/2, y1 = y + h;
+  const t = Math.max(0, Math.min(rTop, w/2, h/2));
+  const b = Math.max(0, Math.min(rBot, w/2, h/2));
+  const d = [
+    `M ${x0} ${y + t}`,
+    t ? `A ${t} ${t} 0 0 1 ${x0 + t} ${y}` : '',
+    `L ${x1 - t} ${y}`,
+    t ? `A ${t} ${t} 0 0 1 ${x1} ${y + t}` : '',
+    `L ${x1} ${y1 - b}`,
+    b ? `A ${b} ${b} 0 0 1 ${x1 - b} ${y1}` : '',
+    `L ${x0 + b} ${y1}`,
+    b ? `A ${b} ${b} 0 0 1 ${x0} ${y1 - b}` : '',
+    'Z'
+  ].filter(Boolean).join(' ');
+  return `<path d="${d}" fill="#111"/>`;
+}
 function uChannelPostMarkup(x,y,h,w=22) {
   const webW=w*0.48;
   const flangeW=(w-webW)/2;
@@ -375,6 +406,15 @@ function reconcileSelections() {
     const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
     if(match>=0) $("bracket").value=match;
   }
+  // A galvanized u-channel traffic post never carries a decorative finial.
+  // That is an invalid product configuration, so it is not offered rather than
+  // being drawn plausibly.
+  const post      = DATA.posts[+$("post").value];
+  const noneIdx   = DATA.finials.findIndex(f=>f.style==="none");
+  const decorOK   = post.profile!=="uchannel";
+  const finialSel = $("finial");
+  Array.from(finialSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==noneIdx; });
+  if(!decorOK && noneIdx>=0) finialSel.value=String(noneIdx);
 }
 function render() {
   const blade=DATA.blades[+$("blade").value];
@@ -523,21 +563,29 @@ function render() {
     finialScale = mountScale(finialAsset, postPxW);
     finialSvg = `<g transform="translate(${postX} ${postTopY}) scale(${finialScale})">${finialAsset.svg}</g>`;
   }
+  // The spine continues UP into the finial's collar by that asset's embed depth
+  // and is flat there, so its cut end is buried instead of domed off at the
+  // mating plane. Break edges are flat too — a snapped post is not pill-shaped.
+  // Only genuinely exposed ends are capped. Draw order is unchanged: the spine
+  // is emitted before the finial, so the collar occludes the inserted portion.
+  const capR     = post.profile==="square4" ? 1.5 : postPxW/2;
+  const embedPx  = finialAsset ? (finialAsset.embedDepth || 0) * finialScale : 0;
+  const spineTop = postTopY - embedPx;
   const lowerPostSvg = post.profile==="uchannel"
     ? uChannelPostMarkup(postX,lowerSectionTopY,groundY-lowerSectionTopY,postPxW)
-    : `<rect x="${postX-postPxW/2}" y="${lowerSectionTopY}" width="${postPxW}" height="${groundY-lowerSectionTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>`;
+    : postSegment(postX, lowerSectionTopY, groundY-lowerSectionTopY, postPxW, 0, capR);
   const upperPostSvg = post.profile==="uchannel"
-    ? uChannelPostMarkup(postX,postTopY,topSectionBottomY-postTopY,postPxW)
-    : `<rect x="${postX-postPxW/2}" y="${postTopY}" width="${postPxW}" height="${topSectionBottomY-postTopY}" rx="${post.profile==="square4" ? 1.5 : postPxW/2}" fill="#111"/>`;
+    ? uChannelPostMarkup(postX,spineTop,topSectionBottomY-spineTop,postPxW)
+    : postSegment(postX, spineTop, topSectionBottomY-spineTop, postPxW, finialAsset ? 0 : capR, 0);
   $("assembly").innerHTML = `
-    ${baseSvg}
-    ${lowerPostSvg}
-    ${upperPostSvg}
+    <g data-part="base">${baseSvg}</g>
+    <g data-part="post-lower">${lowerPostSvg}</g>
+    <g data-part="post-upper">${upperPostSvg}</g>
     <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
           fill="none" stroke="#6b7280" stroke-width="2"/>
     <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
           fill="none" stroke="#6b7280" stroke-width="2"/>
-    ${finialSvg}
+    <g data-part="finial">${finialSvg}</g>
     ${bracket1} ${bracket2}
     <g fill="${face}" stroke="#111" stroke-width="2.5">${noStreet1 ? "" : blade1}${noStreet2 ? "" : blade2}</g>
     <g fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2">
@@ -568,6 +616,11 @@ function render() {
     finial: finial.sku,
     base:   base.sku,
     postPxW: postPxW,
+    matingY: postTopY,
+    spineTop: spineTop,
+    embedPx: embedPx,
+    embedDepth: finialAsset ? (finialAsset.embedDepth || 0) : null,
+    postProfile: post.profile,
     finialScale: finialScale,
     // rendered mating width vs post width — 1.00 means the socket exactly
     // covers the post; COLLAR_RATIO is the intended target.

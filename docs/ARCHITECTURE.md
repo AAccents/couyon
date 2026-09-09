@@ -221,12 +221,27 @@ The rule produces sensible hardware across the library without any per-asset tun
 
 ## 7. Occlusion and overlap
 
-**Not yet implemented — this is the agreed target.**
+**Implemented for the finial joint. Still outstanding at the base joint.**
+
+The root cause of the "stacked objects" look was not a missing overlap but the post's
+own end geometry: every segment was drawn as a rect with `rx = width/2`, which domes
+**both** ends. The post therefore tapered to zero width exactly at the mating plane and
+the finial's flat-bottomed collar landed on a point. `postSegment()` now takes an
+independent radius per end, so an end is capped only where it is genuinely exposed:
+
+| End | Radius |
+|---|---|
+| Upper segment top, finial mounted | flat — buried in the collar |
+| Upper segment top, no finial | capped — a bare post reads as capped |
+| Both break edges | flat — a snapped post is not pill-shaped |
+| Ground end | capped (unchanged; normally hidden by the base) |
 
 - Draw the post as **one continuous spine**, then paint mounted components over it in
   station order. Opaque components occlude naturally.
 - Each mounting asset declares `embedDepth` — how far the post continues *inside* it. The
-  post is simply drawn that much longer. No per-joint fudging.
+  post is simply drawn that much longer. No per-joint fudging. Values are measured off the
+  rendered silhouette (the straight-sided run of each collar below its first flare), not
+  chosen by eye: pineapple 34.25, ball 14.75, dome 17.50, spear 16.75 asset units.
 - Draw order: **spine → base → finial → brackets → blades → text.** Blades and text last
   so lettering is never occluded.
 
@@ -259,8 +274,8 @@ Deliberately minimal. Every field below is **per-component**. See §10.
   svg:            "<g …>",   // artwork, authored per §5
   mateWidth:      81,        // width at y=0, in asset units        [implemented]
   drawnForPostDia: 4.0,      // nominal post dia this vector depicts [planned]
-  embedDepth:     0.5,       // post continues this far inside, in   [planned]
-                             //   asset units
+  embedDepth:     34.25,     // post continues this far inside,      [implemented]
+                             //   in asset units
 }
 ```
 
@@ -342,6 +357,17 @@ Explicitly rejected: `actualFits: [...]` / `renderableOn: [...]` lists. They are
 data that rots, and they impose real entry burden across a catalog that is not finished.
 A single `drawnForPostDia` per asset yields the same capability with zero maintenance.
 
+### Enforced incompatibility
+
+Some combinations are not "render them plausibly" cases at all — they are invalid product
+configurations, and making them look convincing would be optimising a thing that must never
+be ordered. A galvanized u-channel traffic post never carries a decorative finial.
+
+`reconcileSelections()` therefore disables the decorative finial options and forces
+`Finial = None` whenever a u-channel post is selected, and the contact sheet records those
+combinations as invalid rather than scoring them. This is a rule about one post profile,
+not about a post/finial pair, so it does not violate section 10.
+
 ### Surfacing
 
 - **Component summary table** — carries the note: *representative image; order the 2⅜″
@@ -359,6 +385,26 @@ geometry would defeat its purpose.
 It reads `window.__proofDebug`, which `render()` publishes each pass, to show the computed
 scale and socket-to-post ratio numerically per cell.
 
+### The mounting invariant
+
+The sheet also **measures the rendered output** rather than re-deriving geometry. Using the
+`data-part` hooks the renderer emits (`post-upper`, `post-lower`, `base`, `finial`), it
+rasterises each assembly three times — post only, finial only, and whole — and checks four
+things across the joint:
+
+| Check | Fails when |
+|---|---|
+| ENTERS | the post is not actually present above the mating plane |
+| NO GAP | any scanline across the joint is empty |
+| COVERED | the finial is narrower than the post anywhere the post is inside it |
+| EMERGES | the post is not at full width just below the collar rim (the old dome) |
+
+The covered band is `[spineTop, matingY)` — the mating plane row itself is where the collar
+legitimately ends, so it is excluded. `clear` reports the tightest margin in user units.
+
+These checks are mutation-tested: zeroing `embedDepth`, shrinking the collar below post
+width, and restoring the domed post terminus are each caught by a different check.
+
 Any change to mounting, scaling, or draw order must be checked against the contact sheet
 before it is committed. This is the only mechanism that will catch regressions as the asset
 library grows — it would have surfaced the 1.99× dome cap immediately.
@@ -375,7 +421,10 @@ library grows — it would have surfaced the 1.99× dome cap immediately.
 | 4 | Contact sheet (`test.html`) | **done** |
 | 5 | Inch-space asset authoring + `drawnForPostDia` | not started |
 | 6 | Mount stations / host+attachments generalization | not started |
-| 7 | Occlusion model + `embedDepth` + drawn collars | not started |
+| 7a | Occlusion at the finial joint (`embedDepth`, flat ends) | **done** |
+| 7b | Occlusion at the base joint + drawn collars | not started |
+| 9 | Mounting invariant in the contact sheet | **done** |
+| 10 | U-channel / decorative-finial incompatibility | **done** |
 | 8 | Projection convention decision | **undecided** — §9 |
 
 Steps 5–7 are deliberately deferred until the step 1–4 rendering change has been visually
@@ -391,7 +440,8 @@ that only solves the stack will need redoing.
 
 - **Lower break squiggle overlaps the base.** `lowerSectionTopY` (455) sits below
   `baseTopY` (417 for a 27 in base), so the lower break marker is drawn *inside* the base.
-  Invisible while everything is `#111`; a defect as soon as it isn't. Fix belongs with §7.
+  Invisible while everything is `#111`; a defect as soon as it isn't. Fix belongs with §7b.
+  (The break *edges* themselves are now flat — only the marker's position is still wrong.)
 - **Post is painted over the base.** Current draw order is base → post, so the post covers
   the base's lower ornament detail. Same fix. This is no longer hypothetical: the
   galvanized u-channel post renders in greys rather than `#111`, so on that post the
