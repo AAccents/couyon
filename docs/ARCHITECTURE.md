@@ -199,6 +199,10 @@ scale = (postPxW × COLLAR_RATIO) / asset.mateWidth
 
 Aspect ratio is always preserved. Assets are never stretched on one axis to meet the post.
 
+The spear placeholder was previously drawn inline with absolute canvas coordinates. It has
+been re-authored bottom-origin and moved into the registry, so the registry has no
+exceptions — every finial goes through the same path. It remains a placeholder shape.
+
 ### Why this is also physically correct
 
 A 4″ pineapple scaled to a 2⅜″ socket renders at ~59%. That is not a distortion — the real
@@ -389,7 +393,10 @@ that only solves the stack will need redoing.
   `baseTopY` (417 for a 27 in base), so the lower break marker is drawn *inside* the base.
   Invisible while everything is `#111`; a defect as soon as it isn't. Fix belongs with §7.
 - **Post is painted over the base.** Current draw order is base → post, so the post covers
-  the base's lower ornament detail. Same fix.
+  the base's lower ornament detail. Same fix. This is no longer hypothetical: the
+  galvanized u-channel post renders in greys rather than `#111`, so on that post the
+  overlap and the misplaced break marker are both plainly visible today. It is the first
+  concrete instance of the colour problem described in section 7.
 - **U-channel width is a raw pixel constant.** `postPxW = 22` for `uchannel`, not derived
   from a nominal dimension — implying ≈ 4.4 in, where real u-channel is ≈ 2.5 in. Give it a
   `nominalDiameter` like every other post.

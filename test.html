@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Couyon — Contact Sheet</title>
+<style>
+:root{
+  --bg:#eef1f4; --panel:#fff; --ink:#17191c; --muted:#6b7280;
+  --aa:#f58220; --line:#d7dce2; --ok:#0f6b45; --warn:#b45309; --bad:#b91c1c;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#111;color:#fff;padding:16px 22px;display:flex;align-items:center;
+  justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:17px;margin:0}
+.sub{font-size:12px;color:#b8bec7;margin-top:3px}
+.bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.bar label{font-size:12px;color:#b8bec7;display:flex;gap:6px;align-items:center}
+select{padding:6px 8px;border:1px solid #444;border-radius:7px;background:#1c1f23;color:#fff;font-size:13px}
+button{border:0;border-radius:7px;padding:7px 12px;font-weight:700;cursor:pointer;
+  background:var(--aa);color:#fff;font-size:13px}
+main{padding:20px 22px 60px}
+.status{font-size:13px;color:var(--muted);margin:0 0 16px}
+.status strong{color:var(--ink)}
+.status .pass{color:var(--ok);font-weight:700}
+.status .fail{color:var(--bad);font-weight:700}
+section{margin-bottom:34px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 4px;color:#444}
+.note{font-size:12px;color:var(--muted);margin:0 0 14px;max-width:70ch;line-height:1.5}
+.grid{display:grid;gap:12px}
+.cell{background:var(--panel);border:1px solid var(--line);border-radius:11px;overflow:hidden;
+  display:flex;flex-direction:column}
+.cell.flag{border-color:#e9b384;box-shadow:0 0 0 2px #f6dcc4 inset}
+.cap{padding:8px 10px;border-bottom:1px solid var(--line);font-size:11px;line-height:1.35}
+.cap b{display:block;font-size:12px}
+.cap span{color:var(--muted)}
+.art{padding:6px;background:linear-gradient(#f8fafc,#eef2f6);display:flex;
+  align-items:center;justify-content:center;min-height:150px}
+.art svg{width:100%;height:auto;display:block;background:transparent}
+.metrics{padding:7px 10px;border-top:1px solid var(--line);font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;display:flex;
+  justify-content:space-between;gap:8px}
+.r-ok{color:var(--ok);font-weight:700}
+.r-warn{color:var(--warn);font-weight:700}
+.r-bad{color:var(--bad);font-weight:700}
+#rig{position:absolute;width:1000px;height:760px;left:-4000px;top:0;border:0}
+.err{background:#fff;border:1px solid #f0c2c2;border-radius:11px;padding:16px;
+  color:var(--bad);font-size:13px;line-height:1.55;max-width:80ch}
+.err code{background:#f7eaea;padding:1px 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Couyon — Contact Sheet</h1>
+    <div class="sub">Every finial x every post, driven through the real renderer</div>
+  </div>
+  <div class="bar">
+    <label>Zoom
+      <select id="zoom">
+        <option value="finial">Finial joint</option>
+        <option value="top">Upper assembly</option>
+        <option value="base">Base joint</option>
+        <option value="full">Full proof</option>
+      </select>
+    </label>
+    <label>Blades
+      <select id="blades">
+        <option value="hide" selected>Hidden</option>
+        <option value="show">Shown</option>
+      </select>
+    </label>
+    <label>Cell size
+      <select id="size">
+        <option value="210">Small</option>
+        <option value="280" selected>Medium</option>
+        <option value="380">Large</option>
+      </select>
+    </label>
+    <button id="rerun">Re-run</button>
+  </div>
+</header>
+
+<main>
+  <p class="status" id="status">Loading renderer&hellip;</p>
+  <div id="out"></div>
+</main>
+
+<iframe id="rig" src="index.html" title="render rig"></iframe>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Contact sheet.
+
+   This page contains NO geometry of its own. It drives index.html in a hidden
+   same-origin iframe, sets the real controls, and extracts the SVG the real
+   renderer produced. Duplicating any render logic here would defeat the point:
+   the sheet must fail when the app is wrong, not agree with a second copy of
+   the same mistake.
+
+   See docs/ARCHITECTURE.md section 12.
+--------------------------------------------------------------------------- */
+
+const rig    = document.getElementById('rig');
+const out    = document.getElementById('out');
+const status = document.getElementById('status');
+
+const VIEWS = {
+  finial: '392 62 116 116',
+  top:    '330 70 240 300',
+  base:   '368 392 164 168',
+  full:   '0 0 900 620',
+};
+
+function W() { return rig.contentWindow; }
+function D() { return rig.contentDocument; }
+
+function waitForRig() {
+  return new Promise((resolve, reject) => {
+    const t0 = Date.now();
+    (function poll() {
+      let ok = false;
+      try {
+        ok = !!(D() && D().getElementById('proof') &&
+                D().getElementById('finial') &&
+                D().getElementById('finial').options.length &&
+                W().__proofDebug);
+      } catch (e) { ok = false; }
+      if (ok) return resolve();
+      if (Date.now() - t0 > 8000) return reject(new Error('timeout'));
+      setTimeout(poll, 60);
+    })();
+  });
+}
+
+/* Select by index, then poke the app's own input handler. */
+function choose(id, index) {
+  const el = D().getElementById(id);
+  if (!el) return;
+  el.value = String(index);
+  el.dispatchEvent(new (W().Event)('input', { bubbles: true }));
+}
+
+/* Tick/untick one of the app's checkboxes through its own handler. */
+function toggle(id, on) {
+  const el = D().getElementById(id);
+  if (!el) return;
+  el.checked = !!on;
+  el.dispatchEvent(new (W().Event)('input', { bubbles: true }));
+}
+
+/* Pull the rendered SVG out, retargeted to a zoom window. */
+function grab(viewBox) {
+  const src = D().getElementById('proof');
+  const svg = src.cloneNode(true);
+  svg.removeAttribute('id');
+  svg.setAttribute('viewBox', viewBox);
+  svg.removeAttribute('width');
+  svg.removeAttribute('height');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  // Strip <defs> — its ids would be duplicated across every cell on this page.
+  const defs = svg.querySelector('defs');
+  if (defs) defs.remove();
+  return svg;
+}
+
+function ratioClass(r, target) {
+  if (r == null) return '';
+  const d = Math.abs(r - target) / target;
+  if (d <= 0.02) return 'r-ok';
+  if (d <= 0.25) return 'r-warn';
+  return 'r-bad';
+}
+
+function cell(caption, sub, svg, dbg, target) {
+  const c = document.createElement('div');
+  c.className = 'cell';
+
+  const cap = document.createElement('div');
+  cap.className = 'cap';
+  cap.innerHTML = '<b></b><span></span>';
+  cap.querySelector('b').textContent = caption;
+  cap.querySelector('span').textContent = sub;
+  c.appendChild(cap);
+
+  const art = document.createElement('div');
+  art.className = 'art';
+  art.appendChild(svg);
+  c.appendChild(art);
+
+  if (dbg) {
+    const m = document.createElement('div');
+    m.className = 'metrics';
+    const left  = document.createElement('span');
+    const right = document.createElement('span');
+    left.textContent = dbg.finialScale != null
+      ? 'scale ' + dbg.finialScale.toFixed(4)
+      : 'no finial';
+    if (dbg.mateRatio != null) {
+      right.textContent = 'socket ' + dbg.mateRatio.toFixed(2) + 'x post';
+      right.className = ratioClass(dbg.mateRatio, target);
+      if (ratioClass(dbg.mateRatio, target) === 'r-bad') c.classList.add('flag');
+    } else {
+      right.textContent = '—';
+    }
+    m.appendChild(left); m.appendChild(right);
+    c.appendChild(m);
+  }
+  return c;
+}
+
+function grid(cols) {
+  const g = document.createElement('div');
+  g.className = 'grid';
+  g.style.gridTemplateColumns = 'repeat(auto-fill,minmax(' + cols + 'px,1fr))';
+  return g;
+}
+
+function section(title, note) {
+  const s = document.createElement('section');
+  const h = document.createElement('h2');
+  h.textContent = title;
+  const p = document.createElement('p');
+  p.className = 'note';
+  p.textContent = note;
+  s.appendChild(h); s.appendChild(p);
+  return s;
+}
+
+let runId = 0;
+
+async function build() {
+  const me = ++runId;                  // only the newest run may render
+  out.textContent = '';
+  status.textContent = 'Rendering…';
+
+  try { await waitForRig(); }
+  catch (e) {
+    if (me !== runId) return;
+    status.textContent = '';
+    out.innerHTML = '<div class="err"><b>Could not reach the renderer.</b><br>' +
+      'This page drives <code>index.html</code> in a same-origin iframe. That works when both ' +
+      'files are served over http/https (GitHub Pages, or a local static server such as ' +
+      '<code>python3 -m http.server</code>). Opening this file directly from disk with a ' +
+      '<code>file://</code> URL will not work — the browser blocks cross-document access.</div>';
+    return;
+  }
+
+  // Enumerate from the real controls — the app's own catalog bindings are
+  // lexical (const), not window properties, and should not be exposed just for
+  // this page. Driving the visible <select>s is also a truer test.
+  const opts   = id => Array.from(D().getElementById(id).options).map(o => o.textContent.trim());
+  const FINIALS = opts('finial'), POSTS = opts('post'), BASES = opts('base');
+  const TARGET  = (W().__proofDebug && W().__proofDebug.collarRatio != null)
+                    ? W().__proofDebug.collarRatio : 1.10;
+  if (me !== runId) return;
+  const view   = VIEWS[document.getElementById('zoom').value];
+  const cols   = document.getElementById('size').value;
+
+  // Deterministic starting state.
+  const hideBlades = document.getElementById('blades').value === 'hide';
+  choose('bracket', 0);
+  choose('config', 0);
+  choose('base', 1);
+  toggle('noStreet1', hideBlades);
+  toggle('noStreet2', hideBlades);
+
+  let flagged = 0, total = 0;
+
+  // ---- finial x post -----------------------------------------------------
+  const s1 = section(
+    'Finial × post',
+    'Socket-driven scale: every finial is scaled so its mating plane matches the post it ' +
+    'sits on. "socket" is the rendered mating width as a multiple of post width — it ' +
+    'should read ' + TARGET.toFixed(2) + 'x in every cell, on every post.');
+  const g1 = grid(cols);
+
+  for (let f = 0; f < FINIALS.length; f++) {
+    for (let p = 0; p < POSTS.length; p++) {
+      choose('finial', f);
+      choose('post', p);
+      const dbg = Object.assign({}, W().__proofDebug);
+      const svg = grab(view);
+      total++;
+      if (dbg.mateRatio != null && ratioClass(dbg.mateRatio, TARGET) === 'r-bad') flagged++;
+      g1.appendChild(cell(FINIALS[f], POSTS[p], svg, dbg, TARGET));
+    }
+  }
+  s1.appendChild(g1);
+  out.appendChild(s1);
+
+  // ---- base x post -------------------------------------------------------
+  const s2 = section(
+    'Base × post',
+    'Bases are still drawn procedurally with hardcoded half-widths that do not reference ' +
+    'post diameter, so these joints are not yet interface-driven. Included so the ' +
+    'difference is visible. See docs/ARCHITECTURE.md section 14.');
+  const g2 = grid(cols);
+
+  choose('finial', 1);
+  for (let b = 0; b < BASES.length; b++) {
+    for (let p = 0; p < POSTS.length; p++) {
+      choose('base', b);
+      choose('post', p);
+      const svg = grab(VIEWS[document.getElementById('zoom').value === 'finial'
+        ? 'base'
+        : document.getElementById('zoom').value]);
+      g2.appendChild(cell(BASES[b], POSTS[p], svg, null, TARGET));
+    }
+  }
+  s2.appendChild(g2);
+  out.appendChild(s2);
+
+  // restore
+  choose('base', 1);
+
+  const okCount = total - flagged;
+  status.innerHTML =
+    '<strong>' + total + '</strong> finial/post combinations rendered — ' +
+    '<span class="' + (flagged ? 'fail' : 'pass') + '">' +
+    (flagged ? flagged + ' outside tolerance' : okCount + ' within tolerance') +
+    '</span>. Target socket ratio ' + TARGET.toFixed(2) + 'x.';
+}
+
+document.getElementById('zoom').addEventListener('change', build);
+document.getElementById('blades').addEventListener('change', build);
+document.getElementById('size').addEventListener('change', build);
+document.getElementById('rerun').addEventListener('click', () => {
+  rig.src = 'index.html';
+  rig.addEventListener('load', build, { once: true });
+});
+
+rig.addEventListener('load', build);
+build();   // covers the case where the iframe finished before this script ran
+</script>
+</body>
+</html>

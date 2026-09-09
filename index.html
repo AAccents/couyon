@@ -230,6 +230,52 @@ const AA_DOME_CAP_SVG = `<g class="finish" fill="#111111">
    <path d="M-34,-25 Q0,-20 34,-25"/>
    <path d="M-34,-19 Q0,-16 34,-19"/>
  </g>`;
+const AA_SPEAR_FINIAL_SVG = `<g class="finish" fill="#111111">
+    <!-- collar at the mating plane (y=0); slips over the post -->
+    <path d="M-30,0 L-30,-14
+             Q-30,-18 -25,-20
+             L25,-20
+             Q30,-18 30,-14
+             L30,0 Z"/>
+    <!-- ball stop -->
+    <ellipse cx="0" cy="-27" rx="13" ry="8"/>
+    <!-- shaft and spearhead -->
+    <path d="M-6,-33 L6,-33 L6,-62 L16,-58 L0,-120 L-16,-58 L-6,-62 Z"/>
+  </g>
+<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2"
+     stroke-linecap="round" opacity="0.8">
+    <path d="M-25,-20 Q0,-16 25,-20"/>
+  </g>`;
+// ---------------------------------------------------------------------------
+// Finial assets — proof-render geometry.
+//
+// Every asset is authored bottom-origin: x=0 is the post centreline and y=0 is
+// the MATING PLANE (the surface that meets the top of the post). The decorative
+// body extends into negative y.
+//
+// mateWidth is the asset's width at y=0, measured in its own units. It is the
+// ONLY per-asset number the renderer needs: scale is derived by matching that
+// mating width to the post, so the socket always lands on the post regardless
+// of what size the vector was originally drawn for.
+//
+// See docs/ARCHITECTURE.md section 6.
+// ---------------------------------------------------------------------------
+const COLLAR_RATIO = 1.10;   // slip-fit hardware sits slightly proud of the post
+
+const FINIAL_ASSETS = {
+  pineapple: { svg: AA_PINEAPPLE_FINIAL_SVG, mateWidth: 81 },
+  ball:      { svg: AA_BALL_FINIAL_SVG,      mateWidth: 50 },
+  dome:      { svg: AA_DOME_CAP_SVG,         mateWidth: 76 },
+  spear:     { svg: AA_SPEAR_FINIAL_SVG,     mateWidth: 60 },
+};
+
+// Scale an asset so its mating plane matches the post it sits on.
+// Receives the post's INTERFACE (width in px), never the post's identity —
+// see docs/ARCHITECTURE.md section 10.
+function mountScale(asset, postPxW) {
+  return (postPxW * COLLAR_RATIO) / asset.mateWidth;
+}
+
 const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"NONE","label":"None","style":"none"},{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"NONE","label":"None","style":"none","height":"0 in","family":"None"},{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
 const $ = id => document.getElementById(id);
 function fillSelect(id, items, labelFn) {
@@ -285,25 +331,6 @@ function bracketMarkup(style, x, y, dir=1) {
           fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
     <circle cx="${x+55*s}" cy="${y+20}" r="6" fill="none" stroke="#111" stroke-width="4"/>`;
 }
-function finialMarkup(style) {
-  if(style==="spear") return `
-    <path d="M450 72 L432 104 L445 101 L450 125 L455 101 L468 104 Z" fill="#111"/>
-    <circle cx="450" cy="126" r="9" fill="#111"/>`;
-  return `
-    <ellipse cx="450" cy="101" rx="16" ry="23" fill="#111"/>
-    <path d="M442 78 Q450 62 458 78" fill="none" stroke="#111" stroke-width="7" stroke-linecap="round"/>
-    <path d="M435 101 Q450 91 465 101 M437 111 Q450 101 463 111" fill="none" stroke="#333" stroke-width="3"/>
-    <rect x="438" y="122" width="24" height="10" rx="3" fill="#111"/>`;
-}
-function baseMarkup(style) {
-  if(style==="short") return `
-    <rect x="420" y="515" width="60" height="18" rx="5" fill="#111"/>
-    <rect x="410" y="532" width="80" height="15" rx="4" fill="#111"/>`;
-  return `
-    <path d="M423 505 L477 505 L486 548 L414 548 Z" fill="#111"/>
-    <rect x="405" y="547" width="90" height="16" rx="4" fill="#111"/>
-    <path d="M425 515 H475 M421 530 H479" stroke="#424242" stroke-width="4"/>`;
-}
 function updateStreetControls() {
   const no1 = $("noStreet1").checked;
   const no2 = $("noStreet2").checked;
@@ -334,9 +361,24 @@ function uChannelPostMarkup(x,y,h,w=22) {
       ${holes}
     </g>`;
 }
+// ---------------------------------------------------------------------------
+// Selection reconciliation.
+// Runs BEFORE render(), never inside it. render() is a pure read of the
+// controls; anything that CHANGES a control belongs here. Keeping these apart
+// stops the renderer from mutating a control during its own input event.
+// ---------------------------------------------------------------------------
+function reconcileSelections() {
+  const blade   = DATA.blades[+$("blade").value];
+  const bracket = DATA.brackets[+$("bracket").value];
+  // A bracket must match the blade it carries.
+  if(bracket.style!=="none" && bracket.size!==blade.size) {
+    const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
+    if(match>=0) $("bracket").value=match;
+  }
+}
 function render() {
   const blade=DATA.blades[+$("blade").value];
-  let bracket=DATA.brackets[+$("bracket").value];
+  const bracket=DATA.brackets[+$("bracket").value];
   const finial=DATA.finials[+$("finial").value];
   const post=DATA.posts[+$("post").value];
   const base=DATA.bases[+$("base").value];
@@ -347,11 +389,6 @@ function render() {
   const s1=$("street1").value || "STREET NAME";
   const s2=$("street2").value || "";
   updateStreetControls();
-  // Keep bracket size compatible with blade size.
-  if(bracket.style!=="none" && bracket.size !== blade.size) {
-    const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
-    if(match>=0) { $("bracket").value=match; bracket=DATA.brackets[match]; }
-  }
   // -------------------------
   // Dimension-driven geometry
   // -------------------------
@@ -477,24 +514,14 @@ function render() {
               fill="none" stroke="#555" stroke-width="1.2" opacity=".75"/>
       </g>`;
   }
-  // Place finial immediately above post top.
-  let finialSvg;
-  if(finial.style==="none") {
-    finialSvg="";
-  } else if(finial.style==="pineapple") {
-    const scale=38/200;
-    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_PINEAPPLE_FINIAL_SVG}</g>`;
-  } else if(finial.style==="ball") {
-    const scale=31/118;
-    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_BALL_FINIAL_SVG}</g>`;
-  } else if(finial.style==="dome") {
-    const scale=18/58;
-    finialSvg=`<g transform="translate(${postX} ${postTopY}) scale(${scale})">${AA_DOME_CAP_SVG}</g>`;
-  } else {
-    finialSvg=`
-      <path d="M${postX} ${postTopY-38} L${postX-13} ${postTopY-12} L${postX-4} ${postTopY-15}
-               L${postX} ${postTopY+4} L${postX+4} ${postTopY-15} L${postX+13} ${postTopY-12} Z" fill="#111"/>
-      <circle cx="${postX}" cy="${postTopY+4}" r="6" fill="#111"/>`;
+  // Finial: socket-driven scale. The asset is scaled so its mating plane matches
+  // the post, then dropped at the post top. No per-combination offsets.
+  let finialSvg = "";
+  let finialScale = null;
+  const finialAsset = FINIAL_ASSETS[finial.style];
+  if(finialAsset) {
+    finialScale = mountScale(finialAsset, postPxW);
+    finialSvg = `<g transform="translate(${postX} ${postTopY}) scale(${finialScale})">${finialAsset.svg}</g>`;
   }
   const lowerPostSvg = post.profile==="uchannel"
     ? uChannelPostMarkup(postX,lowerSectionTopY,groundY-lowerSectionTopY,postPxW)
@@ -533,9 +560,24 @@ function render() {
   $("sumFinial").textContent=`${finial.sku} — ${finial.label}`;
   $("sumBase").textContent=`${base.sku} — ${base.label}`;
   $("sumConfig").textContent=config;
+
+  // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
+  window.__proofDebug = {
+    collarRatio: COLLAR_RATIO,
+    post:   post.sku,
+    finial: finial.sku,
+    base:   base.sku,
+    postPxW: postPxW,
+    finialScale: finialScale,
+    // rendered mating width vs post width — 1.00 means the socket exactly
+    // covers the post; COLLAR_RATIO is the intended target.
+    mateRatio: finialAsset ? (finialAsset.mateWidth * finialScale) / postPxW : null,
+    mateWidthPx: finialAsset ? finialAsset.mateWidth * finialScale : null,
+  };
 }
-document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",render));
-render();
+function update() { reconcileSelections(); render(); }
+document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",update));
+update();
 async function updateBuildInfo() {
   const el=$("buildInfo");
   if(!el) return;
