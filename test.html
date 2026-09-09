@@ -265,6 +265,97 @@ async function mountInvariant(svgEl, dbg) {
   };
 }
 
+/* ---------------------------------------------------------------------------
+   Base-joint invariant.
+
+   Same approach as the mounting invariant: measure the rendered output through
+   the data-part hooks rather than re-deriving geometry.
+
+     COVERED      the base is at least as wide as the post everywhere the post
+                  is behind it
+     CONTINUOUS   no empty scanline from the break down to grade
+     EXPOSED RUN  a run of post is actually visible between the break marker and
+                  the top of the base
+     MARKER CLEAR the break marker lies entirely above the base
+     GROUNDED     the base terminates at grade, not below it
+
+   COVERED and GROUNDED are not applicable when no base is fitted.
+--------------------------------------------------------------------------- */
+
+const GROUND_TOL   = 0.5;    // user units a base may overhang grade
+const RUN_FRACTION = 0.75;   // of the nominal exposed run, allowing for the clamp
+const COVER_ENTRY_MAX = 3;   // user units of cap taper before the base must cover the post
+
+async function baseInvariant(svgEl, dbg) {
+  if (dbg.baseTopY == null) return null;
+  const hasBase = dbg.baseStyle !== 'none';
+  const win = { x: 395, y: dbg.lowerSectionTopY - 12,
+                w: 110, h: (dbg.groundY + 12) - (dbg.lowerSectionTopY - 12) };
+  const row = y => Math.round((y - win.y) * SS);
+
+  const postRows = await silhouette(svgEl, ['base', 'finial', 'break'], win);
+  const baseRows = await silhouette(svgEl, ['post-upper', 'post-lower', 'finial', 'break'], win);
+  const bothRows = await silhouette(svgEl, ['finial', 'break'], win);
+
+  const rBaseTop = row(dbg.baseTopY), rGround = row(dbg.groundY), rBreak = row(dbg.lowerSectionTopY);
+  const last = bothRows.length - 1;
+
+  // COVERED. A base's top is not a flat face — it is the apex of a cap, so the
+  // first rows below baseTopY are a taper the post legitimately shows through.
+  // Rather than pick an epsilon, find the row where the base FIRST reaches post
+  // width and require both that it happens promptly and that coverage holds
+  // from there to grade.
+  let covMin = Infinity, entry = null;
+  if (hasBase) {
+    for (let r = Math.max(0, rBaseTop); r <= Math.min(last, rGround); r++) {
+      if (baseRows[r] >= postRows[r] - CLEAR_TOL) { entry = r; break; }
+    }
+    if (entry !== null) {
+      for (let r = entry; r < Math.min(last, rGround); r++) {
+        if (postRows[r] > 0) covMin = Math.min(covMin, baseRows[r] - postRows[r]);
+      }
+    }
+  }
+  const entryPx = entry === null ? null : (entry - rBaseTop) / SS;
+  const covered = !hasBase ? null
+    : (entry !== null && entryPx <= COVER_ENTRY_MAX &&
+       (!isFinite(covMin) || covMin >= CLEAR_TOL));
+
+  // CONTINUOUS — the ground row is the terminating edge, not part of the body
+  let continuous = true;
+  for (let r = Math.max(0, rBreak); r < Math.min(last, rGround); r++) {
+    if (bothRows[r] <= 0) continuous = false;
+  }
+
+  // EXPOSED RUN
+  let runOk = true;
+  for (let r = Math.max(0, rBreak); r < Math.min(last, rBaseTop); r++) {
+    if (postRows[r] <= 0) runOk = false;
+  }
+  const runPx = dbg.exposedRun;
+  const exposedOk = runOk && runPx >= RUN_FRACTION * dbg.minExposedRun;
+
+  // MARKER CLEAR and GROUNDED — exact, from the live geometry
+  let markerClear = true, grounded = null, spill = null;
+  try {
+    const mk = svgEl.querySelector('[data-part="break"]').getBBox();
+    markerClear = !hasBase || (mk.y + mk.height) <= dbg.baseTopY + 0.01;
+  } catch (e) { /* leave as measured default */ }
+  if (hasBase) {
+    try {
+      const bb = svgEl.querySelector('[data-part="base"]').getBBox();
+      spill = (bb.y + bb.height) - dbg.groundY;
+      grounded = spill <= GROUND_TOL;
+    } catch (e) { grounded = null; }
+  }
+
+  const checks = { covered, continuous, exposed: exposedOk, markerClear, grounded };
+  const failed = Object.entries(checks).filter(([, v]) => v === false).map(([k]) => k);
+  return { checks, failed, runPx, spill, entryPx,
+           covMin: isFinite(covMin) ? covMin : null,
+           pass: failed.length === 0 };
+}
+
 function ratioClass(r, target) {
   if (r == null) return '';
   const d = Math.abs(r - target) / target;
@@ -273,7 +364,7 @@ function ratioClass(r, target) {
   return 'r-bad';
 }
 
-function cell(caption, sub, svg, dbg, target, inv) {
+function cell(caption, sub, svg, dbg, target, inv, binv) {
   const c = document.createElement('div');
   c.className = 'cell';
 
@@ -306,6 +397,24 @@ function cell(caption, sub, svg, dbg, target, inv) {
     }
     m.appendChild(left); m.appendChild(right);
     c.appendChild(m);
+  }
+  if (binv) {
+    const v = document.createElement('div');
+    v.className = 'metrics';
+    const l = document.createElement('span'), r = document.createElement('span');
+    l.textContent = 'base joint';
+    if (binv.pass) {
+      r.className = 'r-ok';
+      r.textContent = 'PASS  run ' + binv.runPx.toFixed(0) +
+        (binv.covMin !== null ? ', cover ' + binv.covMin.toFixed(2) : '') +
+        (binv.entryPx !== null && binv.entryPx > 0 ? ', entry ' + binv.entryPx.toFixed(1) : '');
+    } else {
+      r.className = 'r-bad';
+      r.textContent = 'FAIL  ' + binv.failed.join(', ');
+      c.classList.add('bad');
+    }
+    v.appendChild(l); v.appendChild(r);
+    c.appendChild(v);
   }
   if (inv) {
     const v = document.createElement('div');
@@ -390,6 +499,7 @@ async function build() {
   toggle('noStreet2', hideBlades);
 
   let flagged = 0, total = 0, skipped = 0, invTotal = 0, invFail = 0;
+  let bTotal = 0, bFail = 0, bSkipped = 0;
 
   // ---- finial x post -----------------------------------------------------
   const s1 = section(
@@ -440,20 +550,40 @@ async function build() {
   // ---- base x post -------------------------------------------------------
   const s2 = section(
     'Base × post',
-    'Bases are still drawn procedurally with hardcoded half-widths that do not reference ' +
-    'post diameter, so these joints are not yet interface-driven. Included so the ' +
-    'difference is visible. See docs/ARCHITECTURE.md section 14.');
+    'The post passes behind the base and the base occludes it; the break marker must sit ' +
+    'in the run of post above the base. "run" is the measured exposed post between the ' +
+    'marker and the base top, "cover" the tightest margin by which the base outreaches ' +
+    'the post. Base widths still do not reference post diameter — that is the later ' +
+    'socket treatment, not this pass. See docs/ARCHITECTURE.md sections 7 and 14.');
   const g2 = grid(cols);
 
-  choose('finial', 1);
+  const bZoom = document.getElementById('zoom').value === 'finial'
+    ? 'base' : document.getElementById('zoom').value;
+
   for (let b = 0; b < BASES.length; b++) {
     for (let p = 0; p < POSTS.length; p++) {
-      choose('base', b);
       choose('post', p);
-      const svg = grab(VIEWS[document.getElementById('zoom').value === 'finial'
-        ? 'base'
-        : document.getElementById('zoom').value]);
-      g2.appendChild(cell(BASES[b], POSTS[p], svg, null, TARGET));
+      choose('base', b);
+      choose('finial', 1);
+      const actualB = +D().getElementById('base').value;
+      if (actualB !== b) {
+        bSkipped++;
+        const c = document.createElement('div');
+        c.className = 'cell skip';
+        c.innerHTML = '<div class="cap"><b></b><span></span></div>' +
+                      '<div class="skipmsg">not a valid configuration<br>' +
+                      'decorative bases are not offered on this post</div>';
+        c.querySelector('b').textContent = BASES[b];
+        c.querySelector('span').textContent = POSTS[p];
+        g2.appendChild(c);
+        continue;
+      }
+      const dbg  = Object.assign({}, W().__proofDebug);
+      const svg  = grab(VIEWS[bZoom]);
+      const binv = await baseInvariant(D().getElementById('proof'), dbg);
+      if (me !== runId) return;
+      if (binv) { bTotal++; if (!binv.pass) bFail++; }
+      g2.appendChild(cell(BASES[b], POSTS[p], svg, null, TARGET, null, binv));
     }
   }
   s2.appendChild(g2);
@@ -470,7 +600,11 @@ async function build() {
     '</span> at ' + TARGET.toFixed(2) + 'x. Mounting invariant: ' +
     '<span class="' + (invFail ? 'fail' : 'pass') + '">' +
     (invFail ? invFail + ' of ' + invTotal + ' FAIL' : invTotal + ' pass') +
-    '</span>.' + (skipped ? ' ' + skipped + ' invalid configurations skipped.' : '');
+    '</span>. Base joint: ' +
+    '<span class="' + (bFail ? 'fail' : 'pass') + '">' +
+    (bFail ? bFail + ' of ' + bTotal + ' FAIL' : bTotal + ' pass') +
+    '</span>.' + ((skipped + bSkipped) ? ' ' + (skipped + bSkipped) +
+      ' invalid configurations skipped.' : '');
 }
 
 document.getElementById('zoom').addEventListener('change', build);

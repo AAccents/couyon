@@ -95,16 +95,27 @@ Dimensions that are **deliberately non-literal**:
 
 ### Vertical datums
 
-| Constant | Value | Meaning |
+| Datum | Value | Meaning |
 |---|---|---|
-| `postTopY` | 110 | Top of post / finial mating plane |
-| `topSectionBottomY` | 330 | Bottom edge of upper post segment (break starts) |
-| `lowerSectionTopY` | 455 | Top edge of lower post segment (break ends) |
-| `groundY` | 552 | Grade line |
+| `postTopY` | 110 (fixed) | Top of post / finial mating plane |
+| `topSectionBottomY` | 330 (fixed) | Bottom edge of upper post segment (break starts) |
+| `baseTopY` | **derived** — `groundY − heightIn × pxPerIn` | Base mating plane (its top face) |
+| `lowerSectionTopY` | **derived** — `max(topSectionBottomY + MIN_COMPRESSION, baseTopY − EXPOSED_RUN)` | Top edge of lower post segment (break ends) |
+| `groundY` | 552 (fixed) | Grade line |
 
 The region between `topSectionBottomY` and `lowerSectionTopY` is the **compression zone**.
-It is not a gap in the post — it represents elided length. Name it as such; do not treat
-those two constants as independent layout values.
+It is not a gap in the post — it represents elided length.
+
+**Its top is fixed and its length varies.** That is the correct shape for the model: the
+zone absorbs however much post the base height leaves over, so a consistent run of post is
+always visible emerging from the base. `lowerSectionTopY` was previously a hardcoded 455
+that ignored base height entirely, which put the whole lower segment — and the break marker
+with it — inside any base taller than about 19 in. Treating both boundaries as independent
+constants is what licensed that bug; do not go back to it.
+
+`MIN_COMPRESSION` clamps the zone so an unusually tall future base cannot collapse it.
+`Base = None` needs no special case: `baseTopY == groundY`, and the same expression gives
+the right answer.
 
 ---
 
@@ -245,6 +256,26 @@ independent radius per end, so an end is capped only where it is genuinely expos
 - Draw order: **spine → base → finial → brackets → blades → text.** Blades and text last
   so lettering is never occluded.
 
+### The base joint
+
+**A base's mating plane is its top face. The post passes behind it and continues to grade.
+The base occludes.** That single convention covers a decorative sleeve (Corinthian, SB46)
+and a welded plate base alike — in both cases the post is hidden below the top face, so the
+distinction does not need to be modelled.
+
+Consequences, all of which are now implemented:
+
+- The base is emitted **after** the post segments, so it occludes them. Previously it was
+  emitted first and the post was painted over the base, erasing 40% of the Corinthian's
+  detail on a 2⅜ in post and 54.8% on a 4 in post.
+- The break marker is emitted **with the post, before the base**, so it can never show
+  through a base even if the layout is later changed.
+- A base terminates at grade. Nothing may overhang `groundY`.
+
+Note that the draw order above was *already* documented here before it was implemented —
+the code contradicted it. If the code and this document disagree about draw order, this
+document is the specification.
+
 ### Two constraints
 
 **Everything is currently `#111`, and that is hiding the joints.** Black-on-black conceals
@@ -289,6 +320,14 @@ Deliberately minimal. Every field below is **per-component**. See §10.
 ```
 
 Nothing else. If a field can be *computed* from these, it is not stored.
+
+### Base
+
+**No new metadata.** A base needs nothing beyond the height already in the catalog: its
+mating plane is `groundY − heightIn × pxPerIn`, and the occlusion convention in section 7
+does the rest. Do not add a `throatDepth` or an embed field by analogy with `embedDepth` —
+the finial needed one because the post enters it from below and stops; the post simply
+passes behind a base and keeps going.
 
 ---
 
@@ -405,6 +444,27 @@ legitimately ends, so it is excluded. `clear` reports the tightest margin in use
 These checks are mutation-tested: zeroing `embedDepth`, shrinking the collar below post
 width, and restoring the domed post terminus are each caught by a different check.
 
+### The base-joint invariant
+
+The same technique, applied at the other end:
+
+| Check | Fails when |
+|---|---|
+| COVERED | the base is narrower than the post anywhere the post is behind it |
+| CONTINUOUS | any scanline from the break down to grade is empty |
+| EXPOSED RUN | no run of post is visible between the break marker and the base top |
+| MARKER CLEAR | the break marker is not entirely above the base |
+| GROUNDED | the base extends below grade |
+
+Two boundary rows are excluded by construction rather than by fudge factor. The grade row
+is the terminating edge of both post and base, so CONTINUOUS runs to `groundY` exclusive.
+A base's top is the apex of a cap rather than a flat face, so COVERED starts from the row
+where the base first reaches post width and additionally requires that to happen within
+`COVER_ENTRY_MAX` of the top — a taper the post shows through briefly is correct; a base
+that never covers the post is not.
+
+COVERED and GROUNDED are not applicable when no base is fitted.
+
 Any change to mounting, scaling, or draw order must be checked against the contact sheet
 before it is committed. This is the only mechanism that will catch regressions as the asset
 library grows — it would have surfaced the 1.99× dome cap immediately.
@@ -422,9 +482,10 @@ library grows — it would have surfaced the 1.99× dome cap immediately.
 | 5 | Inch-space asset authoring + `drawnForPostDia` | not started |
 | 6 | Mount stations / host+attachments generalization | not started |
 | 7a | Occlusion at the finial joint (`embedDepth`, flat ends) | **done** |
-| 7b | Occlusion at the base joint + drawn collars | not started |
+| 7b | Occlusion at the base joint (draw order, derived break, grade) | **done** |
+| 7c | Drawn collars / ferrules for coloured finishes | not started |
 | 9 | Mounting invariant in the contact sheet | **done** |
-| 10 | U-channel / decorative-finial incompatibility | **done** |
+| 10 | U-channel incompatibility (decorative finials and bases) | **done** |
 | 8 | Projection convention decision | **undecided** — §9 |
 
 Steps 5–7 are deliberately deferred until the step 1–4 rendering change has been visually
@@ -438,15 +499,12 @@ that only solves the stack will need redoing.
 
 ## 14. Known issues not yet addressed
 
-- **Lower break squiggle overlaps the base.** `lowerSectionTopY` (455) sits below
-  `baseTopY` (417 for a 27 in base), so the lower break marker is drawn *inside* the base.
-  Invisible while everything is `#111`; a defect as soon as it isn't. Fix belongs with §7b.
-  (The break *edges* themselves are now flat — only the marker's position is still wrong.)
-- **Post is painted over the base.** Current draw order is base → post, so the post covers
-  the base's lower ornament detail. Same fix. This is no longer hypothetical: the
-  galvanized u-channel post renders in greys rather than `#111`, so on that post the
-  overlap and the misplaced break marker are both plainly visible today. It is the first
-  concrete instance of the colour problem described in section 7.
+- **The Corinthian base does not cover a 4 in square post at grade.** Caught by the base
+  invariant, which fails COVERED on that one combination: the base's foot ellipse tapers
+  narrower than the post near grade (deficit up to 3.9 px), so the post's corners sit
+  outside the base's foot. This is the base-width issue below, not a joint defect, and it
+  is deliberately left failing rather than papered over by loosening the tolerance — a test
+  that goes green by relaxing when it finds what it was built to find is worthless.
 - **U-channel width is a raw pixel constant.** `postPxW = 22` for `uchannel`, not derived
   from a nominal dimension — implying ≈ 4.4 in, where real u-channel is ≈ 2.5 in. Give it a
   `nominalDiameter` like every other post.
@@ -455,8 +513,9 @@ that only solves the stack will need redoing.
   (e.g. `pxPerIn = 20` with a proportionally larger viewBox) removes a class of visual
   noise at no cost.
 - **Base geometry is not interface-driven.** Bases are drawn procedurally with hardcoded
-  half-widths (`postX ± 19`, `± 22`) that do not reference `nominalDiameter`. Same
-  treatment as §6 is owed to them.
+  half-widths (`postX ± 19`, `± 22`) that do not reference `nominalDiameter`; measured
+  bounding widths are 72 / 86 / 68 px regardless of the post. Same treatment as §6 is owed
+  to them, and it is what the COVERED failure above is really pointing at.
 
 ---
 

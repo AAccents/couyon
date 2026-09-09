@@ -415,6 +415,11 @@ function reconcileSelections() {
   const finialSel = $("finial");
   Array.from(finialSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==noneIdx; });
   if(!decorOK && noneIdx>=0) finialSel.value=String(noneIdx);
+  // ...nor a decorative base. Same category of invalid product configuration.
+  const baseNoneIdx = DATA.bases.findIndex(b=>b.style==="none");
+  const baseSel     = $("base");
+  Array.from(baseSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==baseNoneIdx; });
+  if(!decorOK && baseNoneIdx>=0) baseSel.value=String(baseNoneIdx);
 }
 function render() {
   const blade=DATA.blades[+$("blade").value];
@@ -448,8 +453,20 @@ function render() {
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
   const postTopY = 110;
+  // ---------------------------------------------------------------------------
+  // Compression zone. The upper boundary is fixed; the LOWER boundary is derived
+  // from the base so a consistent run of post is always visible emerging from it.
+  // The zone's length therefore varies — which is correct, since it stands for
+  // elided post length. Base = None falls out of the same rule (baseTopY ==
+  // groundY), so there is no special-case layout path.
+  // See docs/ARCHITECTURE.md sections 3 and 7.
+  // ---------------------------------------------------------------------------
+  const EXPOSED_RUN     = 40;   // px of post that must show above the base
+  const MIN_COMPRESSION = 40;   // px — the zone may never collapse below this
   const topSectionBottomY = 330;
-  const lowerSectionTopY = 455;
+  const baseTopY = groundY-basePxH;
+  const lowerSectionTopY = Math.max(topSectionBottomY + MIN_COMPRESSION,
+                                    baseTopY - EXPOSED_RUN);
   // CPC catalog imagery places the blades near the very top of the post,
   // immediately below the finial. We use a small real-world clearance.
   const finialBottomY = postTopY + 8;
@@ -481,7 +498,6 @@ function render() {
     bracket2 = noStreet2 ? "" : bracketMarkup(bracket.style,postX,b2cy,-1);
   }
   // Scale the tall/short base to catalog-relative height.
-  const baseTopY = groundY-basePxH;
   let baseSvg;
   if(base.style==="none") {
     baseSvg = "";
@@ -545,7 +561,7 @@ function render() {
         <path d="M ${postX-23} ${groundY-19} H ${postX+23} L ${postX+27} ${groundY-12} H ${postX-27} Z" fill="#111"/>
         <ellipse cx="${postX}" cy="${groundY-10}" rx="30" ry="5" fill="#111"/>
         <path d="M ${postX-31} ${groundY-9} H ${postX+31} L ${postX+35} ${groundY-3} H ${postX-35} Z" fill="#111"/>
-        <ellipse cx="${postX}" cy="${groundY-2}" rx="36" ry="4" fill="#0b0b0b"/>
+        <ellipse cx="${postX}" cy="${groundY-4}" rx="36" ry="4" fill="#0b0b0b"/>
         <!-- restrained highlights to keep black detail readable in proofs -->
         <path d="M ${postX-15} ${baseTopY+14} H ${postX+15}
                  M ${postX-11} ${baseTopY+35} H ${postX+11}
@@ -578,13 +594,15 @@ function render() {
     ? uChannelPostMarkup(postX,spineTop,topSectionBottomY-spineTop,postPxW)
     : postSegment(postX, spineTop, topSectionBottomY-spineTop, postPxW, finialAsset ? 0 : capR, 0);
   $("assembly").innerHTML = `
-    <g data-part="base">${baseSvg}</g>
     <g data-part="post-lower">${lowerPostSvg}</g>
     <g data-part="post-upper">${upperPostSvg}</g>
-    <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
-          fill="none" stroke="#6b7280" stroke-width="2"/>
-    <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
-          fill="none" stroke="#6b7280" stroke-width="2"/>
+    <g data-part="break">
+      <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+            fill="none" stroke="#6b7280" stroke-width="2"/>
+      <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+            fill="none" stroke="#6b7280" stroke-width="2"/>
+    </g>
+    <g data-part="base">${baseSvg}</g>
     <g data-part="finial">${finialSvg}</g>
     ${bracket1} ${bracket2}
     <g fill="${face}" stroke="#111" stroke-width="2.5">${noStreet1 ? "" : blade1}${noStreet2 ? "" : blade2}</g>
@@ -621,6 +639,13 @@ function render() {
     embedPx: embedPx,
     embedDepth: finialAsset ? (finialAsset.embedDepth || 0) : null,
     postProfile: post.profile,
+    baseStyle: base.style,
+    baseTopY: baseTopY,
+    groundY: groundY,
+    lowerSectionTopY: lowerSectionTopY,
+    topSectionBottomY: topSectionBottomY,
+    exposedRun: baseTopY - lowerSectionTopY,
+    minExposedRun: EXPOSED_RUN,
     finialScale: finialScale,
     // rendered mating width vs post width — 1.00 means the socket exactly
     // covers the post; COLLAR_RATIO is the intended target.
