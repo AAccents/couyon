@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 100 1000"
+     preserveAspectRatio="none"
+     data-asset-id="AA_Square_Post_v1"
+     data-role="post"
+     data-shape="square-post"
+     data-fidelity="reference-derived"
+     aria-label="AA Square Post">
+  <metadata>
+    Aluminum Accents vendor-neutral proof artwork for a square post.
+    Visual treatment is based on supplied photographs of the actual square-post systems.
+    This asset represents the straight square shaft only; bases, collars, caps, finials,
+    brackets, blades, and signs are separate assembly components.
+    Product records control physical width, length, compatibility, and procurement identity.
+  </metadata>
+
+  <defs>
+    <!-- restrained face shading to suggest a square extrusion without turning it into a round post -->
+    <linearGradient id="squareFace" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111111"/>
+      <stop offset="10%" stop-color="#181818"/>
+      <stop offset="48%" stop-color="#252525"/>
+      <stop offset="82%" stop-color="#181818"/>
+      <stop offset="100%" stop-color="#0D0D0D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- normalized straight square shaft -->
+  <rect x="0" y="0" width="100" height="1000" fill="url(#squareFace)"/>
+
+  <!-- crisp vertical edges characteristic of the square extrusion -->
+  <path d="M3,0 L3,1000" stroke="#3E3E3E" stroke-width="2" opacity="0.58"/>
+  <path d="M97,0 L97,1000" stroke="#050505" stroke-width="2" opacity="0.72"/>
+
+  <!-- subtle planar highlight; deliberately straight rather than curved -->
+  <path d="M18,0 L18,1000" stroke="#505050" stroke-width="2.2" opacity="0.24"/>
+</svg>

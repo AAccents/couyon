@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 100 1000"
+     preserveAspectRatio="none"
+     data-asset-id="AA_Fluted_Round_Post_v1"
+     data-role="post"
+     data-shape="fluted-round-post"
+     data-fidelity="reference-derived"
+     aria-label="AA Fluted Round Post">
+  <metadata>
+    Aluminum Accents vendor-neutral proof artwork for a fluted round post.
+    Visual treatment is based on supplied photographs of the actual installed product.
+    This asset intentionally does not encode vendor, SKU, physical diameter, or nominal length.
+    Product records control real post diameter, length, compatibility, and procurement identity.
+  </metadata>
+
+  <defs>
+    <linearGradient id="cylinderShade" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0B0B0B"/>
+      <stop offset="14%" stop-color="#151515"/>
+      <stop offset="31%" stop-color="#242424"/>
+      <stop offset="47%" stop-color="#333333"/>
+      <stop offset="58%" stop-color="#282828"/>
+      <stop offset="75%" stop-color="#171717"/>
+      <stop offset="100%" stop-color="#090909"/>
+    </linearGradient>
+
+    <clipPath id="postClip">
+      <rect x="0" y="0" width="100" height="1000" rx="50" ry="50"/>
+    </clipPath>
+  </defs>
+
+  <!-- round post body -->
+  <rect x="0" y="0" width="100" height="1000"
+        rx="50" ry="50"
+        fill="url(#cylinderShade)"/>
+
+  <!-- fine vertical fluting, kept subtle so the post still reads as round -->
+  <g clip-path="url(#postClip)" fill="none" stroke-linecap="round">
+    <!-- shadow edges of flutes -->
+    <g stroke="#050505" stroke-width="2.2" opacity="0.72">
+      <path d="M10,0 L10,1000"/>
+      <path d="M16,0 L16,1000"/>
+      <path d="M22,0 L22,1000"/>
+      <path d="M28,0 L28,1000"/>
+      <path d="M34,0 L34,1000"/>
+      <path d="M40,0 L40,1000"/>
+      <path d="M46,0 L46,1000"/>
+      <path d="M52,0 L52,1000"/>
+      <path d="M58,0 L58,1000"/>
+      <path d="M64,0 L64,1000"/>
+      <path d="M70,0 L70,1000"/>
+      <path d="M76,0 L76,1000"/>
+      <path d="M82,0 L82,1000"/>
+      <path d="M88,0 L88,1000"/>
+    </g>
+
+    <!-- narrow highlights on one side of each groove -->
+    <g stroke="#555555" stroke-width="1.05" opacity="0.48">
+      <path d="M12,5 L12,995"/>
+      <path d="M18,5 L18,995"/>
+      <path d="M24,5 L24,995"/>
+      <path d="M30,5 L30,995"/>
+      <path d="M36,5 L36,995"/>
+      <path d="M42,5 L42,995"/>
+      <path d="M48,5 L48,995"/>
+      <path d="M54,5 L54,995"/>
+      <path d="M60,5 L60,995"/>
+      <path d="M66,5 L66,995"/>
+      <path d="M72,5 L72,995"/>
+      <path d="M78,5 L78,995"/>
+      <path d="M84,5 L84,995"/>
+      <path d="M90,5 L90,995"/>
+    </g>
+
+    <!-- broad cylindrical reflection keeps the shaft from reading as flat striping -->
+    <path d="M31,8 C35,210 35,790 31,992"
+          stroke="#777777"
+          stroke-width="3.2"
+          opacity="0.20"/>
+  </g>
+</svg>

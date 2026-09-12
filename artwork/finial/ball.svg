@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-50 -114 100 114"
+     data-asset-id="AA_Ball_Finial_v2"
+     data-role="finial"
+     data-shape="ball"
+     data-fidelity="reference-derived"
+     aria-label="AA Ball Finial">
+  <metadata>
+    Aluminum Accents proof asset for a plain ball finial.
+    Geometry revised from AA_Ball_Finial_v1 using the supplied vendor reference:
+    the ball is approximately 7 percent smaller in width and the transition is simplified.
+    Not tied to a vendor SKU. Mount anchor is bottom-center at 0,0.
+  </metadata>
+
+  <!-- mount anchor: (0,0) -->
+  <g class="finish" fill="#1A1A1A">
+    <!-- simple cylindrical socket -->
+    <path d="M-24,0 L-24,-18
+             Q-24,-21 -20,-23
+             L20,-23
+             Q24,-21 24,-18
+             L24,0 Z"/>
+
+    <!-- restrained neck / shoulder -->
+    <path d="M-16,-23
+             Q-15,-29 -10,-33
+             Q-7,-36 -6,-39
+             L6,-39
+             Q7,-36 10,-33
+             Q15,-29 16,-23 Z"/>
+
+    <!-- smaller plain ball -->
+    <path d="M0,-108
+             C23,-108 39,-92 39,-70
+             C39,-50 26,-35 9,-31
+             C6,-30 3,-29 0,-29
+             C-3,-29 -6,-30 -9,-31
+             C-26,-35 -39,-50 -39,-70
+             C-39,-92 -23,-108 0,-108 Z"/>
+  </g>
+
+  <g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2.0"
+     stroke-linecap="round" opacity="0.75">
+    <path d="M-18,-23 Q0,-20 18,-23"/>
+  </g>
+</svg>

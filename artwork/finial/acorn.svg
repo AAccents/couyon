@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="-48 -124 96 124"
+     data-asset-id="AA_Acorn_Finial_v1_1"
+     data-role="finial"
+     data-shape="acorn"
+     data-fidelity="reference-derived"
+     aria-label="AA Acorn Finial">
+  <metadata>
+    Aluminum Accents proof asset for an acorn finial.
+    Base geometry preserved from AA_Acorn_Finial_v1.
+    Accent treatment revised to a diagonal diamond/lattice pattern based only on the
+    supplied non-vendor texture reference; proportions and silhouette remain derived
+    from the vendor reference. Vendor-neutral customer-proof artwork.
+    Mount anchor is bottom-center at 0,0.
+  </metadata>
+
+  <!-- mount anchor: (0,0) -->
+  <g class="finish" fill="#1A1A1A">
+    <!-- cylindrical socket -->
+    <path d="M-24,0 L-24,-21
+             Q-24,-24 -20,-26
+             L20,-26
+             Q24,-24 24,-21
+             L24,0 Z"/>
+
+    <!-- neck / collar -->
+    <path d="M-15,-26
+             Q-16,-31 -12,-35
+             Q-8,-39 -7,-45
+             L7,-45
+             Q8,-39 12,-35
+             Q16,-31 15,-26 Z"/>
+
+    <!-- acorn body: geometry unchanged from v1 -->
+    <path d="M0,-119
+             C5,-113 12,-106 19,-98
+             C27,-88 32,-77 31,-66
+             C30,-55 24,-47 15,-43
+             C10,-41 5,-40 0,-40
+             C-5,-40 -10,-41 -15,-43
+             C-24,-47 -30,-55 -31,-66
+             C-32,-77 -27,-88 -19,-98
+             C-12,-106 -5,-113 0,-119 Z"/>
+  </g>
+
+  <!-- revised decorative lattice / diamond accent lines -->
+  <g class="detail" fill="none" stroke="#4A4A4A" stroke-width="1.7"
+     stroke-linecap="round" stroke-linejoin="round" opacity="0.82">
+
+    <!-- descending diagonals -->
+    <path d="M-5,-112 C5,-104 14,-96 22,-87"/>
+    <path d="M-14,-104 C-3,-96 8,-87 25,-73"/>
+    <path d="M-21,-93 C-10,-84 2,-74 29,-57"/>
+    <path d="M-27,-79 C-15,-69 -4,-60 20,-46"/>
+
+    <!-- ascending diagonals -->
+    <path d="M5,-112 C-5,-104 -14,-96 -22,-87"/>
+    <path d="M14,-104 C3,-96 -8,-87 -25,-73"/>
+    <path d="M21,-93 C10,-84 -2,-74 -29,-57"/>
+    <path d="M27,-79 C15,-69 4,-60 -20,-46"/>
+
+    <!-- lower body / collar definition -->
+    <path d="M-24,-48 Q0,-42 24,-48"/>
+    <path d="M-18,-27 Q0,-24 18,-27"/>
+  </g>
+</svg>

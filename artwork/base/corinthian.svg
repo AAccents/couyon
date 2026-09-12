@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-40 0 80 135">
+  <title>TCP Corinthian Base — AA Vector Asset v2</title>
+  <desc>
+    Updated Corinthian decorative base used in AA Proof Generator Prototype v0.7.
+    Geometry is normalized to the prototype's 27-inch base height at 5 SVG units per inch.
+    Centerline x=0; top mount y=0; ground/base line y=135.
+  </desc>
+
+  <g aria-label="TCP Corinthian Base">
+    <!-- top cap and collar -->
+    <ellipse cx="0" cy="4" rx="20" ry="4" fill="#111"/>
+    <path d="M -19 5 H 19 L 16 13 H -16 Z" fill="#111"/>
+    <ellipse cx="0" cy="15" rx="22" ry="5" fill="#111"/>
+    <path d="M -16 17
+             Q -20 23 -14 30
+             L -11 37 H 11
+             L 14 30
+             Q 20 23 16 17 Z" fill="#111"/>
+
+    <!-- long fluted shaft -->
+    <path d="M -11 35 H 11
+             L 10 78 H -10 Z" fill="#111"/>
+    <path d="M -6 39 L -5 74
+             M 0 38 L 0 75
+             M 6 39 L 5 74"
+          fill="none" stroke="#4b4b4b" stroke-width="1.5" opacity=".8"/>
+
+    <!-- Corinthian lower ornament -->
+    <path d="M -10 75
+             Q -18 80 -17 86
+             Q -15 91 -9 94
+             Q -18 99 -17 105
+             Q -14 111 -8 114
+             H 8
+             Q 14 111 17 105
+             Q 18 99 9 94
+             Q 15 91 17 86
+             Q 18 80 10 75 Z" fill="#111"/>
+    <path d="M 0 78
+             Q -7 85 -12 87
+             Q -5 91 0 96
+             Q 5 91 12 87
+             Q 7 85 0 78
+             M -12 102 Q 0 108 12 102"
+          fill="none" stroke="#505050" stroke-width="1.7" opacity=".85"/>
+
+    <!-- stepped foot -->
+    <ellipse cx="0" cy="115" rx="22" ry="5" fill="#111"/>
+    <path d="M -23 116 H 23 L 27 123 H -27 Z" fill="#111"/>
+    <ellipse cx="0" cy="125" rx="30" ry="5" fill="#111"/>
+    <path d="M -31 126 H 31 L 35 132 H -35 Z" fill="#111"/>
+    <ellipse cx="0" cy="133" rx="36" ry="4" fill="#0b0b0b"/>
+
+    <!-- restrained highlights -->
+    <path d="M -15 14 H 15
+             M -11 35 H 11
+             M -18 115 H 18
+             M -25 125 H 25"
+          fill="none" stroke="#555" stroke-width="1.2" opacity=".75"/>
+  </g>
+</svg>

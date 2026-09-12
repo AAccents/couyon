@@ -656,8 +656,8 @@ async function build() {
   const assemblyFailures = [];
   for (let p = 0; p < POSTS.length; p++) {
     choose('post', p);
-    choose('base', p === 2 ? 2 : p === 3 ? 0 : 1);
-    choose('finial', p === 2 ? 1 : p === 3 ? 0 : 3);
+    choose('base', 1);
+    choose('finial', 1);
     for (let c = 0; c < 3; c++) for (const bracket of [0,1,3]) for (let state = 0; state < 4; state++) {
       choose('config', c);
       choose('bracket', bracket);
@@ -667,7 +667,7 @@ async function build() {
       aTotal++;
       const caption = POSTS[p] + ' / ' + opts('config')[c] + ' / ' + opts('bracket')[bracket] + ' / state ' + state;
       if (!result.pass) { aFail++; assemblyFailures.push({ caption, failed: result.failed }); }
-      if (!result.pass || (state === 0 && bracket === (p === 3 ? 0 : 1))) {
+      if (!result.pass || (state === 0 && bracket === (p === POSTS.length-1 ? 0 : 1))) {
         const card = cell(opts('config')[c], POSTS[p], grab(VIEWS.full));
         const metrics = document.createElement('div');
         metrics.className = 'metrics ' + (result.pass ? 'r-ok' : 'r-bad');

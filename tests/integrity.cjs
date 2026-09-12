@@ -5,12 +5,12 @@ module.exports = async function validateIntegrity(page, output) {
   const facts = await page.evaluate(() => {
     const before = JSON.stringify(DATA);
     const widths = [];
-    for (const post of [0,1,2,3]) for (const config of [0,1,2]) {
+    for (const post of DATA.posts.keys()) for (const config of [0,1,2]) {
       $('post').value = DATA.posts[post].id; $('config').value = config; update();
       widths.push(__proofDebug.postPxW);
     }
     return { widths, unchanged: before === JSON.stringify(DATA),
-      noInventedWidth: physicalValue(DATA.posts[3],'widthIn') === null,
+      noInventedWidth: physicalValue(DATA.posts.at(-1),'widthIn') === null,
       noInventedReach: DATA.brackets.slice(1).every(b=>physicalValue(b,'reachIn') === null),
       unknownStaysUnknown: proofDimension({dimensions:{}},'widthIn') === null,
       unknownRejected: physicalValue({dimensions:{widthIn:{value:3,confidence:'unknown',source:'map'}}},'widthIn') === null,
@@ -18,17 +18,17 @@ module.exports = async function validateIntegrity(page, output) {
         .every(c=>c.id && Array.isArray(c.vendor) && c.customer?.name),
       uniqueIds: new Set([...DATA.blades,...DATA.brackets,...DATA.finials,...DATA.posts,...DATA.bases].map(c=>c.id)).size ===
         [...DATA.blades,...DATA.brackets,...DATA.finials,...DATA.posts,...DATA.bases].length,
-      customerBoundary: customerSummary(DATA.posts[0].customer)==='2 3/8 in Round Post — 12 ft' && customerSummary(DATA.posts[0])==='Component',
+      customerBoundary: customerSummary(DATA.posts[0].customer)==='2 3/8 in Round Smooth Post' && customerSummary(DATA.posts[0])==='Component',
       none: [...DATA.finials,...DATA.bases,...DATA.brackets].filter(c=>c.style==='none').every(c=>customerSummary(c.customer).startsWith('No ')),
       sb46: DATA.bases[2],
-      provisional: [DATA.finials[4],DATA.bases[2],DATA.brackets[1]].every(c=>internalSummary(c).toLowerCase().includes('provisional')),
-      pineapple: internalSummary(DATA.finials[1]) };
+      provisional: [DATA.bases[2],DATA.brackets[1]].every(c=>internalSummary(c).toLowerCase().includes('provisional')),
+      pineapple: internalSummary(DATA.finials.find(f=>f.id==='AA-FINIAL-3DP')) };
   });
-  assert.deepEqual(facts.widths,[11.875,11.875,11.875,11.875,11.875,11.875,20,20,20,12.5,12.5,12.5]);
+  assert.deepEqual(facts.widths,[11.875,11.875,11.875,15,15,15,15,15,15,20,20,20,20,20,20,20,20,20,12.5,12.5,12.5]);
   for (const key of ['unchanged','noInventedWidth','noInventedReach','unknownStaysUnknown','unknownRejected','identities','uniqueIds','customerBoundary','none','provisional']) assert.ok(facts[key],key);
   assert.equal(facts.sb46.dimensions.heightIn.value,29);
   assert.equal(facts.sb46.dimensions.heightIn.confidence,'vendor-supported');
-  assert.match(facts.pineapple,/inferred/);
+  assert.match(facts.pineapple,/proportion-verified artwork/);
 
   // Synthetic dimensions only, restored before leaving this test. They are not
   // catalog additions or claims about real bracket products.

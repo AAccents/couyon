@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+ viewBox="-50 -58 100 58"
+ data-asset-id="AA_Dome_Cap_v1"
+ data-role="finial"
+ data-fidelity="representative-approved"
+ aria-label="AA Dome Cap">
+ <metadata>
+ Representative Aluminum Accents proof asset for a simple dome post cap.
+ Vendor-neutral customer-facing design intent; not tied to a specific 3-inch/4-inch SKU.
+ Mount anchor is bottom-center at 0,0.
+ </metadata>
+
+ <!-- mount anchor: (0,0) -->
+ <g class="finish" fill="#1A1A1A">
+   <!-- cylindrical slip-over skirt -->
+   <path d="M-38,0 L-38,-15
+            Q-38,-18 -34,-19
+            L34,-19
+            Q38,-18 38,-15
+            L38,0 Z"/>
+   <!-- small rim/lip -->
+   <path d="M-40,-19
+            Q-40,-23 -35,-25
+            L35,-25
+            Q40,-23 40,-19
+            Q20,-16 0,-16
+            Q-20,-16 -40,-19 Z"/>
+   <!-- hemispherical dome -->
+   <path d="M-34,-25
+            C-32,-44 -18,-57 0,-57
+            C18,-57 32,-44 34,-25
+            Q17,-22 0,-22
+            Q-17,-22 -34,-25 Z"/>
+ </g>
+
+ <g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2"
+    stroke-linecap="round" opacity="0.8">
+   <path d="M-34,-25 Q0,-20 34,-25"/>
+   <path d="M-34,-19 Q0,-16 34,-19"/>
+ </g>
+</svg>

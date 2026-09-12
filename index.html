@@ -122,6 +122,7 @@ td{overflow-wrap:anywhere}
     <select id="bracket"></select>
     <label>Finial</label><select id="finial"></select>
     <label>Post</label><select id="post"></select>
+    <label>Post Length</label><select id="postLength"></select>
     <label>Base</label><select id="base"></select>
     <div class="note" id="systemHint" role="status"></div>
   </div>
@@ -170,131 +171,16 @@ td{overflow-wrap:anywhere}
   </section>
 </main>
 </div>
+<script src="artwork.js"></script>
 <script>
-const AA_PINEAPPLE_FINIAL_SVG = `<g class="finish" fill="#111111"><path d="M 1.8,-200 C 3.33,-198.83 8.13,-195.50 11,-193 C 13.87,-190.50 16.50,-188.00 19,-185 C 21.50,-182.00 23.83,-178.67 26,-175 C 28.17,-171.33 30.33,-166.83 32,-163 C 33.67,-159.17 35.03,-155.50 36,-152 C 36.97,-148.50 37.63,-145.00 37.8,-142 C 37.97,-139.00 37.63,-136.33 37,-134 C 36.37,-131.67 35.17,-129.67 34,-128 C 32.83,-126.33 31.33,-125.17 30,-124 C 28.67,-122.83 25.33,-121.33 26,-121 C 26.67,-120.67 31.17,-122.00 34,-122 C 36.83,-122.00 40.58,-121.58 43,-121 L 48.5,-118.5 L 44,-114 C 42.08,-112.75 38.83,-111.67 37,-111 L 33,-110 L 40,-108 L 46,-105 L 45,-100 C 44.17,-98.33 42.50,-96.50 41,-95 C 39.50,-93.50 37.67,-92.17 36,-91 C 34.33,-89.83 32.33,-89.00 31,-88 C 29.67,-87.00 28.75,-86.17 28,-85 C 27.25,-83.83 26.42,-82.33 26.5,-81 C 26.58,-79.67 28.50,-78.33 28.5,-77 C 28.50,-75.67 27.00,-74.50 26.5,-73 C 26.00,-71.50 25.42,-69.83 25.5,-68 C 25.58,-66.17 26.25,-64.00 27,-62 C 27.75,-60.00 28.92,-57.83 30,-56 C 31.08,-54.17 31.17,-52.42 33.5,-51 L 44,-47.5 L 46,-45.5 L 46,-42.5 L 44,-41 L 40.5,-39.5 L 38.5,-36 L 40.5,-32.5 L 40.5,0 L -40.5,0 L -40.5,-32.5 L -38.5,-36 L -40.5,-39.5 L -44,-41 L -46,-42.5 L -46,-45.5 L -44,-47.5 L -33.5,-51 C -31.17,-52.42 -31.08,-54.17 -30,-56 C -28.92,-57.83 -27.75,-60.00 -27,-62 C -26.25,-64.00 -25.58,-66.17 -25.5,-68 C -25.42,-69.83 -26.00,-71.50 -26.5,-73 C -27.00,-74.50 -28.50,-75.67 -28.5,-77 C -28.50,-78.33 -26.58,-79.67 -26.5,-81 C -26.42,-82.33 -27.25,-83.83 -28,-85 C -28.75,-86.17 -29.67,-87.00 -31,-88 C -32.33,-89.00 -34.33,-89.83 -36,-91 C -37.67,-92.17 -39.50,-93.50 -41,-95 C -42.50,-96.50 -44.17,-98.33 -45,-100 L -46,-105 L -40,-108 L -33,-110 L -37,-111 C -38.83,-111.67 -42.08,-112.75 -44,-114 L -48.5,-118.5 L -43,-121 C -40.58,-121.58 -36.83,-122.00 -34,-122 C -31.17,-122.00 -26.67,-120.67 -26,-121 C -25.33,-121.33 -28.67,-122.83 -30,-124 C -31.33,-125.17 -32.83,-126.33 -34,-128 C -35.17,-129.67 -36.37,-131.67 -37,-134 C -37.63,-136.33 -37.97,-139.00 -37.8,-142 C -37.63,-145.00 -36.97,-148.50 -36,-152 C -35.03,-155.50 -33.67,-159.17 -32,-163 C -30.33,-166.83 -28.17,-171.33 -26,-175 C -23.83,-178.67 -21.50,-182.00 -19,-185 C -16.50,-188.00 -13.87,-190.50 -11,-193 C -8.13,-195.50 -3.33,-198.83 -1.8,-200 Z"/></g>
-<g class="detail" fill="none" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.5" stroke-linecap="round">
-    <path d="M -27,-122 C -14,-117 14,-117 27,-122"/>
-    <path d="M -3,-118.5 C -14,-116 -26,-116 -34,-117"/>
-    <path d="M  3,-118.5 C  14,-116  26,-116  34,-117"/>
-    <path d="M -2,-115 C -8,-111 -16,-109 -24,-109"/>
-    <path d="M  2,-115 C   8,-111  16,-109  24,-109"/>
-    <path d="M -43,-103 C -28,-98 -14,-96.5 0,-96.5 C 14,-96.5 28,-98 43,-103"/>
-    <path d="M -27.5,-79 C -16,-75 16,-75 27.5,-79"/>
-    <path d="M -44.5,-44.3 L 44.5,-44.3"/>
-    <path d="M -39.5,-27 L 39.5,-27"/>
-    <circle cx="0" cy="-16" r="2.4" fill="#FFFFFF" fill-opacity="0.22" stroke="none"/>
-  </g>`;
-const AA_BALL_FINIAL_SVG = `<g class="finish" fill="#111111">
-    <!-- socket / lower collar -->
-    <path d="M-25,0 L-25,-12
-             Q-25,-16 -20,-18
-             L-18,-22
-             L18,-22
-             L20,-18
-             Q25,-16 25,-12
-             L25,0 Z"/>
-    <!-- upper collar / transition -->
-    <path d="M-21,-22
-             Q-23,-26 -18,-30
-             Q-14,-34 -10,-37
-             L10,-37
-             Q14,-34 18,-30
-             Q23,-26 21,-22 Z"/>
-    <!-- short neck -->
-    <path d="M-10,-37
-             Q-9,-42 -7,-46
-             L7,-46
-             Q9,-42 10,-37 Z"/>
-    <!-- spherical ball, slightly flattened at mount as in installed references -->
-    <path d="M0,-112
-             C25,-112 42,-94 42,-71
-             C42,-49 27,-32 8,-28
-             C5,-27 3,-26 0,-26
-             C-3,-26 -5,-27 -8,-28
-             C-27,-32 -42,-49 -42,-71
-             C-42,-94 -25,-112 0,-112 Z"/>
-  </g>
-<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2.2"
-     stroke-linecap="round" opacity="0.8">
-    <!-- restrained collar separation lines only; no photographic shading -->
-    <path d="M-18,-22 Q0,-18 18,-22"/>
-    <path d="M-10,-37 Q0,-34 10,-37"/>
-  </g>`;
-const AA_DOME_CAP_SVG = `<g class="finish" fill="#111111">
-   <!-- cylindrical slip-over skirt -->
-   <path d="M-38,0 L-38,-15
-            Q-38,-18 -34,-19
-            L34,-19
-            Q38,-18 38,-15
-            L38,0 Z"/>
-   <!-- small rim/lip -->
-   <path d="M-40,-19
-            Q-40,-23 -35,-25
-            L35,-25
-            Q40,-23 40,-19
-            Q20,-16 0,-16
-            Q-20,-16 -40,-19 Z"/>
-   <!-- hemispherical dome -->
-   <path d="M-34,-25
-            C-32,-44 -18,-57 0,-57
-            C18,-57 32,-44 34,-25
-            Q17,-22 0,-22
-            Q-17,-22 -34,-25 Z"/>
- </g>
-<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2"
-    stroke-linecap="round" opacity="0.8">
-   <path d="M-34,-25 Q0,-20 34,-25"/>
-   <path d="M-34,-19 Q0,-16 34,-19"/>
- </g>`;
-const AA_SPEAR_FINIAL_SVG = `<g class="finish" fill="#111111">
-    <!-- collar at the mating plane (y=0); slips over the post -->
-    <path d="M-30,0 L-30,-14
-             Q-30,-18 -25,-20
-             L25,-20
-             Q30,-18 30,-14
-             L30,0 Z"/>
-    <!-- ball stop -->
-    <ellipse cx="0" cy="-27" rx="13" ry="8"/>
-    <!-- shaft and spearhead -->
-    <path d="M-6,-33 L6,-33 L6,-62 L16,-58 L0,-120 L-16,-58 L-6,-62 Z"/>
-  </g>
-<g class="detail" fill="none" stroke="#4A4A4A" stroke-width="2"
-     stroke-linecap="round" opacity="0.8">
-    <path d="M-25,-20 Q0,-16 25,-20"/>
-  </g>`;
-// ---------------------------------------------------------------------------
-// Finial assets — proof-render geometry.
-//
-// Every asset is authored bottom-origin: x=0 is the post centreline and y=0 is
-// the MATING PLANE (the surface that meets the top of the post). The decorative
-// body extends into negative y.
-//
-// mateWidth is the asset's width at y=0, measured in its own units. It is the
-// ONLY per-asset number the renderer needs: scale is derived by matching that
-// mating width to the post, so the socket always lands on the post regardless
-// of what size the vector was originally drawn for.
-//
-// See docs/ARCHITECTURE.md section 6.
-// ---------------------------------------------------------------------------
-const COLLAR_RATIO = 1.10;   // slip-fit hardware sits slightly proud of the post
+const ART = window.AA_ART;
+const COLLAR_RATIO = 1.10;
 
-// embedDepth is the depth of each asset's straight-sided collar, measured off the
-// rendered silhouette (the run below the first flare, in asset units). It is how
-// far the post continues up inside the collar. Per asset, never per pair.
-const FINIAL_ASSETS = {
-  pineapple: { svg: AA_PINEAPPLE_FINIAL_SVG, mateWidth: 81, embedDepth: 34.25 },
-  ball:      { svg: AA_BALL_FINIAL_SVG,      mateWidth: 50, embedDepth: 14.75 },
-  dome:      { svg: AA_DOME_CAP_SVG,         mateWidth: 76, embedDepth: 17.50 },
-  spear:     { svg: AA_SPEAR_FINIAL_SVG,     mateWidth: 60, embedDepth: 16.75 },
-};
-
-// Scale an asset so its mating plane matches the post it sits on.
-// Receives the post's INTERFACE (width in px), never the post's identity —
-// see docs/ARCHITECTURE.md section 10.
-function mountScale(asset, postPxW) {
-  return (postPxW * COLLAR_RATIO) / asset.mateWidth;
+// Scale artwork from its declared mount interface. Drawing code receives
+// artwork and geometry only; product identity is not available here.
+function mountScale(art, postPxW) {
+  return (postPxW * COLLAR_RATIO) / art.frame.mateWidth;
 }
-
 // Sources refer to the supplied packet, not inferred product equivalence.
 // Source documents stay outside this public repository; see docs/PROVENANCE.md.
 const SOURCES = {
@@ -304,7 +190,8 @@ const SOURCES = {
   oppSquare: 'Curated PDF p.14 / OPP p.62',
   oppFinials: 'Curated PDF p.15 / OPP p.63',
   cpc16: 'Curated PDF p.18 / CPC p.16',
-  cpc17: 'Curated PDF p.19 / CPC p.17'
+  cpc17: 'Curated PDF p.19 / CPC p.17',
+  approvedPhase2: 'Approved Phase 2 product facts'
 };
 const DATA = {
   "blades": [
@@ -452,224 +339,197 @@ const DATA = {
       "id": "AA-FINIAL-NONE",
       "vendor": [],
       "customer": { "name": "No Finial" },
-      "style": "none"
+      "style": "none",
+      "artwork": null,
+      "interfaces": { "requires": [] },
+      "knownCompatiblePostIds": []
     },
     {
-      "id": "AA-FINIAL-PINEAPPLE-V1",
-      "vendor": [],
-      "customer": { "name": "Pineapple Finial" },
-      "style": "pineapple",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {},
-      "artwork": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Reference-based pineapple proportions; fine detail partly inferred."
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "oppFinials",
-        "note": "OPP 3DP reference fits 3 in round; selected AA socket unverified."
-      }
-    },
-    {
-      "id": "AA-FINIAL-BALL-V1",
-      "vendor": [],
-      "customer": { "name": "Ball Finial" },
+      "id": "AA-FINIAL-3B",
+      "vendor": [{ "name": "Ornamental", "sku": "3B", "preferred": true }],
+      "customer": { "name": "3 in Ball Finial" },
       "style": "ball",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {},
-      "artwork": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Reference-derived ball artwork; socket normalized for proof."
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "oppFinials",
-        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
-      }
+      "artwork": "finial.ball",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-3-SMOOTH","AA-POST-ROUND-3-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
     },
     {
-      "id": "AA-FINIAL-DOME-V1",
-      "vendor": [],
-      "customer": { "name": "Dome Cap" },
+      "id": "AA-FINIAL-4SB",
+      "vendor": [{ "name": "Ornamental", "sku": "4SB", "preferred": true }],
+      "customer": { "name": "4 in Square Ball Finial" },
+      "style": "ball",
+      "artwork": "finial.ball",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-SQUARE-4"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-3DB",
+      "vendor": [{ "name": "Ornamental", "sku": "3DB", "preferred": true }],
+      "customer": { "name": "3 in Decorative Ball Finial" },
+      "style": "deco-ball",
+      "artwork": "finial.deco-ball",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-3-SMOOTH","AA-POST-ROUND-3-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-4DB",
+      "vendor": [{ "name": "Ornamental", "sku": "4DB", "preferred": true }],
+      "customer": { "name": "4 in Decorative Ball Finial" },
+      "style": "deco-ball",
+      "artwork": "finial.deco-ball",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-4-SMOOTH","AA-POST-ROUND-4-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-SF4B",
+      "vendor": [{ "name": "Ornamental", "sku": "SF4B", "preferred": true }],
+      "customer": { "name": "4 in Square Decorative Ball Finial" },
+      "style": "deco-ball",
+      "artwork": "finial.deco-ball",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-SQUARE-4"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-3A",
+      "vendor": [{ "name": "Ornamental", "sku": "3A", "preferred": true }],
+      "customer": { "name": "3 in Acorn Finial" },
+      "style": "acorn",
+      "artwork": "finial.acorn",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-3-SMOOTH","AA-POST-ROUND-3-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-3DP",
+      "vendor": [{ "name": "Ornamental", "sku": "3DP", "preferred": true }],
+      "customer": { "name": "3 in Pineapple Finial" },
+      "style": "pineapple",
+      "artwork": "finial.pineapple",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-3-SMOOTH","AA-POST-ROUND-3-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-4DP",
+      "vendor": [{ "name": "Ornamental", "sku": "4DP", "preferred": true }],
+      "customer": { "name": "4 in Pineapple Finial" },
+      "style": "pineapple",
+      "artwork": "finial.pineapple",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-4-SMOOTH","AA-POST-ROUND-4-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-SF4P",
+      "vendor": [{ "name": "Ornamental", "sku": "SF4P", "preferred": true }],
+      "customer": { "name": "4 in Square Pineapple Finial" },
+      "style": "pineapple",
+      "artwork": "finial.pineapple",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-SQUARE-4"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
+    },
+    {
+      "id": "AA-FINIAL-3DC",
+      "vendor": [{ "name": "Ornamental", "sku": "3DC", "preferred": true }],
+      "customer": { "name": "3 in Dome Cap" },
       "style": "dome",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {},
-      "artwork": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Reference-derived dome artwork; socket normalized for proof."
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "oppFinials",
-        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
-      }
-    },
-    {
-      "id": "AA-FINIAL-SPEAR-V1",
-      "vendor": [{ "name": "CPC", "sku": "OPA9516MD", "preferred": true }],
-      "customer": { "name": "Spear Finial" },
-      "style": "spear",
-      "identity": {
-        "confidence": "vendor-supported",
-        "source": "cpc16",
-        "note": ""
-      },
-      "dimensions": {},
-      "artwork": {
-        "confidence": "provisional",
-        "source": "map",
-        "note": "Placeholder spear artwork; physical dimensions unverified."
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "cpc16",
-        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
-      }
+      "artwork": "finial.dome-cap",
+      "interfaces": { "requires": ["top-socket"] },
+      "knownCompatiblePostIds": ["AA-POST-ROUND-3-SMOOTH","AA-POST-ROUND-3-FLUTED"],
+      "identity": { "confidence": "vendor-supported", "source": "oppFinials", "note": "" }
     }
   ],
   "posts": [
     {
-      "id": "AA-POST-ROUND-238-12",
+      "id": "AA-POST-ROUND-238-SMOOTH",
       "vendor": [{ "name": "TCP", "sku": "TCP-238-BPP", "preferred": true }],
-      "customer": { "name": "2 3/8 in Round Post — 12 ft" },
-      "height": "12 ft",
-      "profile": "round238",
-      "family": "TCP Standard",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {
-        "widthIn": {
-          "value": 2.375,
-          "confidence": "vendor-supported",
-          "source": "oppRound"
-        }
-      },
-      "artwork": {
-        "confidence": "representative",
-        "source": "map",
-        "note": "Simple geometric post artwork."
-      },
-      "presentation": {
-        "lengthFt": 12
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "map",
-        "note": "Length is a project preset; supplied product/length combination unverified."
-      }
+      "customer": { "name": "2 3/8 in Round Smooth Post" },
+      "profile": "round",
+      "family": "TCP",
+      "artwork": "post.smooth-round",
+      "dimensions": { "diameterIn": { "value": 2.375, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
     },
     {
-      "id": "AA-POST-ROUND-238-13",
-      "vendor": [{ "name": "TCP", "sku": "TCP-238-BPP-13", "preferred": true }],
-      "customer": { "name": "2 3/8 in Round Post — 13 ft" },
-      "height": "13 ft",
-      "profile": "round238",
-      "family": "TCP Standard",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {
-        "widthIn": {
-          "value": 2.375,
-          "confidence": "vendor-supported",
-          "source": "oppRound"
-        }
-      },
-      "artwork": {
-        "confidence": "representative",
-        "source": "map",
-        "note": "Simple geometric post artwork."
-      },
-      "presentation": {
-        "lengthFt": 13
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "map",
-        "note": "Length is a project preset; supplied product/length combination unverified."
-      }
+      "id": "AA-POST-ROUND-3-SMOOTH",
+      "vendor": [{ "name": "Ornamental", "preferred": true }],
+      "customer": { "name": "3 in Round Smooth Post" },
+      "profile": "round",
+      "family": "Ornamental",
+      "artwork": "post.smooth-round",
+      "dimensions": { "diameterIn": { "value": 3, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
     },
     {
-      "id": "AA-POST-SQUARE-4-12",
-      "vendor": [{ "name": "Rouzan", "sku": "ROUZAN-4SQ", "preferred": true }],
-      "customer": { "name": "4 in Square Post — 12 ft" },
-      "height": "12 ft",
+      "id": "AA-POST-ROUND-3-FLUTED",
+      "vendor": [{ "name": "Ornamental", "preferred": true }],
+      "customer": { "name": "3 in Round Fluted Post" },
+      "profile": "round",
+      "family": "Ornamental",
+      "artwork": "post.fluted-round",
+      "dimensions": { "diameterIn": { "value": 3, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
+    },
+    {
+      "id": "AA-POST-ROUND-4-SMOOTH",
+      "vendor": [{ "name": "Ornamental", "preferred": true }],
+      "customer": { "name": "4 in Round Smooth Post" },
+      "profile": "round",
+      "family": "Ornamental",
+      "artwork": "post.smooth-round",
+      "dimensions": { "diameterIn": { "value": 4, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
+    },
+    {
+      "id": "AA-POST-ROUND-4-FLUTED",
+      "vendor": [{ "name": "Ornamental", "preferred": true }],
+      "customer": { "name": "4 in Round Fluted Post" },
+      "profile": "round",
+      "family": "Ornamental",
+      "artwork": "post.fluted-round",
+      "dimensions": { "diameterIn": { "value": 4, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
+    },
+    {
+      "id": "AA-POST-SQUARE-4",
+      "vendor": [{ "name": "Ornamental", "preferred": true }],
+      "customer": { "name": "4 in Square Post" },
       "profile": "square4",
-      "family": "Rouzan",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
-      "dimensions": {
-        "widthIn": {
-          "value": 4,
-          "confidence": "vendor-supported",
-          "source": "oppSquare"
-        }
-      },
-      "artwork": {
-        "confidence": "representative",
-        "source": "map",
-        "note": "Simple geometric post artwork."
-      },
-      "presentation": {
-        "lengthFt": 12
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "map",
-        "note": "Length is a project preset; supplied product/length combination unverified."
-      }
+      "family": "Ornamental",
+      "artwork": "post.square",
+      "dimensions": { "faceWidthIn": { "value": 4, "confidence": "vendor-supported", "source": "approvedPhase2" } },
+      "lengths": { "values": [10,11,12,13], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": ["top-socket","bottom-socket"] },
+      "identity": { "confidence": "vendor-supported", "source": "approvedPhase2", "note": "Resolved Phase 2 product fact." }
     },
     {
-      "id": "AA-POST-UCHANNEL-12",
-      "vendor": [],
-      "customer": { "name": "Galvanized U-Channel Post — 12 ft" },
-      "height": "12 ft",
+      "id": "AA-POST-UCHANNEL",
+      "vendor": [{ "name": "TCP", "preferred": true }],
+      "customer": { "name": "Galvanized U-Channel Post" },
       "profile": "uchannel",
       "family": "Standard Traffic",
-      "identity": {
-        "confidence": "reference-derived",
-        "source": "map",
-        "note": "Project reference; vendor SKU equivalence unverified."
-      },
+      "artwork": null,
       "dimensions": {},
-      "artwork": {
-        "confidence": "representative",
-        "source": "map",
-        "note": "Simple geometric post artwork."
-      },
-      "presentation": {
-        "lengthFt": 12,
-        "widthIn": 2.5
-      },
-      "fit": {
-        "confidence": "unknown",
-        "source": "map",
-        "note": "2½ in width and 12 ft length are representative pending verification."
-      }
+      "presentation": { "widthIn": 2.5 },
+      "lengths": { "values": [12], "default": 12, "unit": "ft" },
+      "interfaces": { "provides": [] },
+      "identity": { "confidence": "reference-derived", "source": "map", "note": "Project reference; vendor SKU equivalence unverified." }
     }
   ],
   "bases": [
@@ -790,11 +650,14 @@ function preferredVendor(component) {
 }
 function internalOptionLabel(component) {
   const vendor = preferredVendor(component);
-  return `${customerSummary(component.customer)}${vendor ? ` — ${vendor.name} ${vendor.sku}` : ''}`;
+  return `${customerSummary(component.customer)}${vendor ? ` — ${vendor.name}${vendor.sku ? ` ${vendor.sku}` : ''}` : ''}`;
 }
 function internalSummary(component) {
-  const artwork = component.artwork || { confidence:'unknown', note:'Artwork requires verification.' };
-  const labels = { widthIn:'width', heightIn:'height', reachIn:'reach', lengthFt:'length' };
+  const registryArtwork = typeof component.artwork === 'string' ? ART[component.artwork] : null;
+  const artwork = registryArtwork
+    ? { confidence:registryArtwork.confidence, note:registryArtwork.provenance.notes }
+    : component.artwork || { confidence:'unknown', note:'Artwork requires verification.' };
+  const labels = { widthIn:'width', diameterIn:'diameter', faceWidthIn:'face width', heightIn:'height', reachIn:'reach', lengthFt:'length' };
   const facts = Object.entries(component.dimensions || {}).filter(([name]) => physicalValue(component,name) !== null)
     .map(([name,fact]) => `${labels[name] || name} ${fact.value} ${name.endsWith('Ft') ? 'ft' : 'in'} vendor-supported`);
   const fallbacks = Object.entries(component.presentation || {}).filter(([name]) => physicalValue(component,name) === null)
@@ -803,7 +666,7 @@ function internalSummary(component) {
     ? `identity ${component.identity.confidence}` : '';
   const fit = component.fit ? (component.fit.confidence === 'vendor-supported' ? 'stated fit vendor-supported' : 'fit unverified') : '';
   const artworkDisclosure = `${artwork.confidence} artwork${artwork.note ? ` (${artwork.note})` : ''}`;
-  const vendors = (component.vendor || []).map(v=>`${v.name} ${v.sku}${v.preferred ? ' (preferred)' : ''}`).join(', ');
+  const vendors = (component.vendor || []).map(v=>`${v.name}${v.sku ? ` ${v.sku}` : ''}${v.preferred ? ' (preferred)' : ''}`).join(', ');
   return `${component.id} — ${customerSummary(component.customer)} · ${[vendors && `vendor ${vendors}`,component.family && `family ${component.family}`,identity,...facts,...fallbacks,artworkDisclosure,fit].filter(Boolean).join('; ')}.`;
 }
 const $ = id => document.getElementById(id);
@@ -823,13 +686,42 @@ fillSelect("base",DATA.bases);
 fillSelect("config",DATA.configs,x=>x,(_,i)=>String(i));
 $("blade").value="AA-BLADE-RECT-9X30";
 $("bracket").value="AA-BRACKET-NONE";
-$("finial").value="AA-FINIAL-DOME-V1";
-$("post").value="AA-POST-ROUND-238-12";
+$("finial").value="AA-FINIAL-3DC";
+$("post").value="AA-POST-ROUND-238-SMOOTH";
 $("base").value="AA-BASE-CORINTHIAN";
 $("config").value="0";
 function selectedComponent(kind) {
   const items=DATA[kind];
   return items.find(item=>item.id===$(kind.slice(0,-1)).value) || items[0];
+}
+function syncPostLengthOptions() {
+  const post=selectedComponent('posts');
+  const select=$("postLength");
+  const previous=Number(select.value);
+  if(select.dataset.postId!==post.id) {
+    fillSelect('postLength',post.lengths.values,x=>`${x} ft`,x=>String(x));
+    select.dataset.postId=post.id;
+  }
+  select.value=String(post.lengths.values.includes(previous) ? previous : post.lengths.default);
+}
+function selectedPostLength(post) {
+  const value=Number($("postLength").value);
+  return post.lengths.values.includes(value) ? value : post.lengths.default;
+}
+function postWidthIn(post) {
+  if(post.profile==='round') return proofDimension(post,'diameterIn');
+  if(post.profile==='square4') return proofDimension(post,'faceWidthIn');
+  return proofDimension(post,'widthIn');
+}
+function validateAssembly({post,finial,base}) {
+  const issues=[];
+  const provided=post.interfaces?.provides || [];
+  if(finial.style!=='none') {
+    if(!provided.includes('top-socket')) issues.push({severity:'error',code:'finial-post-incompatible'});
+    else if(!(finial.knownCompatiblePostIds || []).includes(post.id)) issues.push({severity:'info',code:'finial-post-unknown'});
+  }
+  if(base.style!=='none' && !provided.includes('bottom-socket')) issues.push({severity:'error',code:'base-post-incompatible'});
+  return issues;
 }
 function esc(s) {
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -971,9 +863,10 @@ function letteringMessage(result) {
   if (result.status === 'conflict') return `${street} — ${result.name}: cannot fit the ${result.minimumIn} in minimum. Name withheld; resolve before export. Review a vendor-approved name, font or blade.`;
   return `${street} — ${result.name}: ${result.status === 'adjusted' ? 'Adjusted within minimum' : 'Fits proof check'}; H-ink height ≈ ${result.capHeightIn.toFixed(2)} in (minimum ${result.minimumIn} in).`;
 }
-function customerProofData(components, lettering) {
+function customerProofData(components, lettering, lengthFt) {
   const componentNames = Object.fromEntries(Object.entries(components)
     .map(([kind,component])=>[kind,customerSummary(component.customer)]));
+  componentNames.post += ` — ${lengthFt} ft`;
   const letteringChecks = lettering.map(result=>({
     street:result.index===0 ? 'Primary' : 'Cross',
     name:result.name,
@@ -988,7 +881,7 @@ function customerProofData(components, lettering) {
     note:'Confirm selected components before ordering.'
   };
 }
-function updateIntegrity({ blade, bracket, post, finial, base, stations, pxPerIn, bladePxH, topSectionBottomY }) {
+function updateIntegrity({ blade, bracket, post, finial, base, lengthFt, stations, pxPerIn, bladePxH, topSectionBottomY }) {
   const lettering = fitStreetLabels(blade,pxPerIn,bladePxH);
   const layoutConflict = stations.some(s=>s.active && s.bottom >= topSectionBottomY-2);
   const blocked = layoutConflict || lettering.some(r=>!['normal','adjusted'].includes(r.status));
@@ -1013,7 +906,7 @@ function updateIntegrity({ blade, bracket, post, finial, base, stations, pxPerIn
   const integrity = { qualification:'Concept Proof — Not for fabrication', blocked, lettering,
     measurement:method, components, sources:SOURCES,
     compatibility:'Visual fit does not establish orderable compatibility.' };
-  const customerProof = customerProofData(components,lettering);
+  const customerProof = customerProofData(components,lettering,lengthFt);
   $('proofIntegrity').textContent = JSON.stringify(customerProof);
   $('proofDescription').textContent = [customerProof.qualification,
     ...Object.values(customerProof.components),
@@ -1061,6 +954,27 @@ function postSegment(cx, y, h, w, rTop, rBot) {
     'Z'
   ].filter(Boolean).join(' ');
   return `<path d="${d}" fill="#111"/>`;
+}
+function pathData(markup) {
+  return markup.match(/\bd="([^"]+)"/)?.[1] || '';
+}
+function postArtworkMarkup(art, segments) {
+  if(!art) return '';
+  const band=art.frame.safeBand;
+  const clips=segments.map((segment,index)=>
+    `<clipPath id="aa-post-clip-${index}" clipPathUnits="userSpaceOnUse"><path d="${pathData(postSegment(segment.cx,segment.y,segment.h,segment.w,segment.rTop,segment.rBot))}"/></clipPath>`
+  ).join('');
+  const layers=segments.map((segment,index)=>`
+    <g clip-path="url(#aa-post-clip-${index})">
+      <svg x="${segment.cx-segment.w/2}" y="${segment.y}" width="${segment.w}" height="${segment.h}"
+           viewBox="0 ${band.y0} 100 ${band.y1-band.y0}" preserveAspectRatio="none">
+        <use href="#aa-post-art-source"/>
+      </svg>
+    </g>`).join('');
+  return `<g data-part="post-artwork"><defs><symbol id="aa-post-art-source" viewBox="${art.frame.viewBox}">${art.markup}</symbol>${clips}</defs>${layers}</g>`;
+}
+function finialArtworkMarkup(art, cx, matingY, scale) {
+  return art ? `<g transform="translate(${cx} ${matingY}) scale(${scale})">${art.markup}</g>` : '';
 }
 function uChannelPostMarkup(x,y,h,w=22) {
   const webW=w*0.48;
@@ -1123,6 +1037,7 @@ function render() {
   const finial=selectedComponent('finials');
   const post=selectedComponent('posts');
   const base=selectedComponent('bases');
+  const lengthFt=selectedPostLength(post);
   const config=DATA.configs[+$("config").value];
   const face=$("face").value, letters=$("letters").value;
   const noStreet1=$("noStreet1").checked;
@@ -1132,7 +1047,6 @@ function render() {
   // -------------------------
   // Dimension-driven geometry
   // -------------------------
-  // Catalog post lengths: 12' / 13' = 144 / 156 in.
   const baseIn = base.style === 'none' ? 0 : proofDimension(base,'heightIn');
   const bladeWIn = proofDimension(blade,'widthIn');
   const bladeHIn = proofDimension(blade,'heightIn');
@@ -1140,7 +1054,7 @@ function render() {
   const pxPerIn = 5.0;
   const groundY = 552;
   const postX = 450;
-  const postPxW = proofDimension(post,'widthIn') * pxPerIn;
+  const postPxW = postWidthIn(post) * pxPerIn;
   const basePxH = baseIn*pxPerIn;
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
@@ -1254,10 +1168,10 @@ function render() {
   // the post, then dropped at the post top. No per-combination offsets.
   let finialSvg = "";
   let finialScale = null;
-  const finialAsset = FINIAL_ASSETS[finial.style];
+  const finialAsset = finial.artwork ? ART[finial.artwork] : null;
   if(finialAsset) {
     finialScale = mountScale(finialAsset, postPxW);
-    finialSvg = `<g transform="translate(${postX} ${postTopY}) scale(${finialScale})">${finialAsset.svg}</g>`;
+    finialSvg = finialArtworkMarkup(finialAsset,postX,postTopY,finialScale);
   }
   // The spine continues UP into the finial's collar by that asset's embed depth
   // and is flat there, so its cut end is buried instead of domed off at the
@@ -1265,7 +1179,7 @@ function render() {
   // Only genuinely exposed ends are capped. Draw order is unchanged: the spine
   // is emitted before the finial, so the collar occludes the inserted portion.
   const capR     = post.profile==="square4" ? 1.5 : postPxW/2;
-  const embedPx  = finialAsset ? (finialAsset.embedDepth || 0) * finialScale : 0;
+  const embedPx  = finialAsset ? finialAsset.frame.embedDepth * finialScale : 0;
   const spineTop = postTopY - embedPx;
   const lowerPostSvg = post.profile==="uchannel"
     ? uChannelPostMarkup(postX,lowerSectionTopY,groundY-lowerSectionTopY,postPxW)
@@ -1273,9 +1187,14 @@ function render() {
   const upperPostSvg = post.profile==="uchannel"
     ? uChannelPostMarkup(postX,spineTop,topSectionBottomY-spineTop,postPxW)
     : postSegment(postX, spineTop, topSectionBottomY-spineTop, postPxW, finialAsset ? 0 : capR, 0);
+  const postArtwork = post.artwork ? postArtworkMarkup(ART[post.artwork],[
+    {cx:postX,y:lowerSectionTopY,h:groundY-lowerSectionTopY,w:postPxW,rTop:0,rBot:capR},
+    {cx:postX,y:spineTop,h:topSectionBottomY-spineTop,w:postPxW,rTop:finialAsset ? 0 : capR,rBot:0}
+  ]) : '';
   $("assembly").innerHTML = `
     <g data-part="post-lower">${lowerPostSvg}</g>
     <g data-part="post-upper">${upperPostSvg}</g>
+    ${postArtwork}
     <g data-part="break">
       <path d="M${postX-24} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
             fill="none" stroke="#6b7280" stroke-width="2"/>
@@ -1300,15 +1219,16 @@ function render() {
     ${noStreet2 ? "" : `<text data-part="street-text" data-street="1" data-available="${bladePxW-16}" x="${b2cx}" y="${b2cy}" dominant-baseline="central" text-anchor="middle"
           font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s2)}</text>`}
     <text x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
-          font-family="Arial,sans-serif" font-size="14" fill="#68707b">${post.height} post, shown broken</text>
+          font-family="Arial,sans-serif" font-size="14" fill="#68707b">${lengthFt} ft post, shown broken</text>
   `
-  const integrity = updateIntegrity({ blade,bracket,post,finial,base,stations,pxPerIn,bladePxH,topSectionBottomY });
+  const compatibility=validateAssembly({post,finial,base});
+  const integrity = updateIntegrity({ blade,bracket,post,finial,base,lengthFt,stations,pxPerIn,bladePxH,topSectionBottomY });
   $("proofTitle").textContent=$("job").value || "Street Name System";
   $("proof").querySelector('title').textContent = $("proofTitle").textContent + ' — Concept Proof';
   $("proof").setAttribute('aria-label', $("proofTitle").textContent + ' — Concept Proof');
   $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : internalSummary(blade);
   $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : internalSummary(bracket);
-  $("sumPost").textContent=internalSummary(post);
+  $("sumPost").textContent=`${internalSummary(post)} Selected length ${lengthFt} ft.`;
   $("sumFinial").textContent=internalSummary(finial);
   $("sumBase").textContent=internalSummary(base);
   $("sumConfig").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : (noStreet1 || noStreet2) ? "Single street — centered" : `${config} · Both street faces shown in spread view`;
@@ -1316,6 +1236,7 @@ function render() {
   // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
   window.__proofDebug = {
     integrity,
+    compatibility,
     stations,
     collarRatio: COLLAR_RATIO,
     post:   post.id,
@@ -1325,7 +1246,8 @@ function render() {
     matingY: postTopY,
     spineTop: spineTop,
     embedPx: embedPx,
-    embedDepth: finialAsset ? (finialAsset.embedDepth || 0) : null,
+    embedDepth: finialAsset ? finialAsset.frame.embedDepth : null,
+    lengthFt,
     postProfile: post.profile,
     baseStyle: base.style,
     baseTopY: baseTopY,
@@ -1337,11 +1259,11 @@ function render() {
     finialScale: finialScale,
     // rendered mating width vs post width — 1.00 means the socket exactly
     // covers the post; COLLAR_RATIO is the intended target.
-    mateRatio: finialAsset ? (finialAsset.mateWidth * finialScale) / postPxW : null,
-    mateWidthPx: finialAsset ? finialAsset.mateWidth * finialScale : null,
+    mateRatio: finialAsset ? (finialAsset.frame.mateWidth * finialScale) / postPxW : null,
+    mateWidthPx: finialAsset ? finialAsset.frame.mateWidth * finialScale : null,
   };
 }
-function update() { reconcileSelections(); updateStreetControls(); render(); }
+function update() { syncPostLengthOptions(); reconcileSelections(); syncPostLengthOptions(); updateStreetControls(); render(); }
 
 // Associate existing visible labels without changing the established form layout.
 document.querySelectorAll('label').forEach(label => {

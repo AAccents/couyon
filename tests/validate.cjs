@@ -6,13 +6,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const assert = require('node:assert/strict');
+require('./artwork-freshness.cjs');
 const root = path.resolve(__dirname, '..');
 const output = process.env.PROOF_TEST_OUTPUT || fs.mkdtempSync(path.join(os.tmpdir(), 'couyon-'));
 fs.mkdirSync(output, { recursive: true });
 const server = http.createServer((req, res) => {
-  const name = req.url === '/test.html' ? 'test.html' : ['/', '/index.html'].includes(req.url) ? 'index.html' : null;
+  const name = req.url === '/test.html' ? 'test.html' : req.url === '/artwork.js' ? 'artwork.js' : ['/', '/index.html'].includes(req.url) ? 'index.html' : null;
   if (!name) { res.writeHead(404); res.end(); return; }
-  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8');
   res.end(fs.readFileSync(path.join(root, name)));
 });
 (async () => {
@@ -29,9 +30,9 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'default.png'), fullPage: true });
     await page.selectOption('#bracket', 'AA-BRACKET-DOGWOOD-30');
     await page.screenshot({ path: path.join(output, 'dogwood.png'), fullPage: true });
-    await page.selectOption('#post', 'AA-POST-SQUARE-4-12');
+    await page.selectOption('#post', 'AA-POST-SQUARE-4');
     await page.selectOption('#base', 'AA-BASE-SQUARE-DECORATIVE');
-    await page.selectOption('#finial', 'AA-FINIAL-PINEAPPLE-V1');
+    await page.selectOption('#finial', 'AA-FINIAL-SF4P');
     await page.selectOption('#config', '2');
     await page.screenshot({ path: path.join(output, 'square-offset.png'), fullPage: true });
     await page.check('#noStreet2');
@@ -39,7 +40,7 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'single-street.png'), fullPage: true });
     await page.uncheck('#noStreet2');
     assert.equal(await page.locator('#config').inputValue(), '2');
-    await page.selectOption('#post', 'AA-POST-UCHANNEL-12');
+    await page.selectOption('#post', 'AA-POST-UCHANNEL');
     assert.equal(await page.locator('#finial').inputValue(), 'AA-FINIAL-NONE');
     assert.equal(await page.locator('#base').inputValue(), 'AA-BASE-NONE');
     await page.selectOption('#bracket', 'AA-BRACKET-NONE');
@@ -52,9 +53,9 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'lettering-conflict.png'), fullPage: true });
     await page.fill('#street1', 'Oak Ln');
     await page.fill('#street2', 'A&B <C>');
-    await page.selectOption('#post', 'AA-POST-ROUND-238-12');
+    await page.selectOption('#post', 'AA-POST-ROUND-238-SMOOTH');
     await page.selectOption('#base', 'AA-BASE-CORINTHIAN');
-    await page.selectOption('#finial', 'AA-FINIAL-SPEAR-V1');
+    await page.selectOption('#finial', 'AA-FINIAL-3DC');
     await page.selectOption('#bracket', 'AA-BRACKET-DOGWOOD-30');
     assert.equal(await page.locator('[data-part="street-text"][data-street="1"]').textContent(), 'A&B <C>');
     const boundsFit = await page.evaluate(() => [...document.querySelectorAll('[data-part="street-text"]')].every(t => {
@@ -67,11 +68,13 @@ const server = http.createServer((req, res) => {
       ...Object.values(DATA).filter(Array.isArray).flatMap(items=>items.flatMap(item=>[
         item.id,
         item.family,
+        typeof item.artwork === 'string' ? item.artwork : null,
         ...(item.vendor || []).flatMap(v=>[v.name,v.sku])
       ])),
+      ...Object.values(ART).flatMap(item=>[item.id,item.provenance.assetId,item.provenance.assetFile]),
       'vendor-supported','reference-derived','representative artwork','provisional','placeholder','fit unverified'
     ].filter(Boolean))]);
-    assert.match(await page.locator('#sumPost').innerText(),/AA-POST-ROUND-238-12.*TCP-238-BPP/,'internal screen summary retains AA and vendor identity');
+    assert.match(await page.locator('#sumPost').innerText(),/AA-POST-ROUND-238-SMOOTH.*TCP-238-BPP/,'internal screen summary retains AA and vendor identity');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export SVG' }).click();
     const download = await downloadPromise;
@@ -81,19 +84,31 @@ const server = http.createServer((req, res) => {
       const doc = new DOMParser().parseFromString(source, 'image/svg+xml');
       const customerProof = JSON.parse(doc.querySelector('metadata').textContent);
       const disclosure = doc.querySelector('desc').textContent;
-      return !doc.querySelector('parsererror') && !!doc.querySelector('title') &&
-        customerProof.components.post === '2 3/8 in Round Post — 12 ft' &&
-        customerProof.components.finial === 'Spear Finial' &&
-        customerProof.components.base === 'Corinthian Base' &&
-        customerProof.components.bracket === 'Dogwood Bracket — 30 in Blade' &&
-        customerProof.components.blade === '9 in Street-Name Blade' &&
-        customerProof.lettering.every(result=>result.result==='Fits proof minimum') &&
-        forbiddenCustomerText.every(secret=>!source.includes(secret)) &&
-        disclosure.includes('2 3/8 in Round Post') && disclosure.includes('Confirm selected components') &&
-        doc.documentElement.textContent.includes('Not for fabrication') &&
-        doc.querySelectorAll('[data-part="blade"]').length === 2;
+      const checks = {
+        parses:!doc.querySelector('parsererror'), title:!!doc.querySelector('title'),
+        post:customerProof.components.post === '2 3/8 in Round Smooth Post — 12 ft',
+        finial:customerProof.components.finial === '3 in Dome Cap',
+        base:customerProof.components.base === 'Corinthian Base',
+        bracket:customerProof.components.bracket === 'Dogwood Bracket — 30 in Blade',
+        blade:customerProof.components.blade === '9 in Street-Name Blade',
+        lettering:customerProof.lettering.every(result=>result.result==='Fits proof minimum'),
+        disclosure:disclosure.includes('2 3/8 in Round Smooth Post') && disclosure.includes('Confirm selected components'),
+        postDefs:!!doc.querySelector('[data-part="post-artwork"] defs'),
+        postPaint:!!doc.querySelector('[data-part="post-artwork"] [fill], [data-part="post-artwork"] [stroke]'),
+        references:[...doc.querySelectorAll('[clip-path], [fill], [stroke]')].every(node=>
+          [...node.attributes].filter(a=>/url\(#/.test(a.value)).every(a=>{
+            const id=a.value.match(/url\(#([^)]+)\)/)?.[1]; return id && doc.getElementById(id);
+          })),
+        qualification:doc.documentElement.textContent.includes('Not for fabrication'),
+        blades:doc.querySelectorAll('[data-part="blade"]').length === 2,
+        leaked:forbiddenCustomerText.filter(secret=>{
+          const escaped=secret.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+          return new RegExp(`(^|[^A-Za-z0-9])${escaped}($|[^A-Za-z0-9])`).test(source);
+        })
+      };
+      return {pass:Object.entries(checks).every(([key,value])=>key==='leaked' ? value.length===0 : value),checks};
     }, {source:fs.readFileSync(exported, 'utf8'),forbiddenCustomerText});
-    assert.ok(exportCheck, 'standalone SVG must parse and contain customer-safe identity only');
+    assert.ok(exportCheck.pass,`standalone SVG must parse and contain customer-safe identity only: ${JSON.stringify(exportCheck.checks)}`);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(url);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile page overflow');
@@ -109,6 +124,7 @@ const server = http.createServer((req, res) => {
     await page.emulateMedia({ media: 'screen' });
     await page.setViewportSize({ width: 1440, height: 1100 });
     await require('./integrity.cjs')(page,output);
+    await require('./phase2.cjs')(page,output);
     await page.goto(url + '/test.html');
     await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Base joint:'), null, { timeout: 60000 }).catch(async e => {
       console.error(await page.locator('body').innerText());
@@ -122,9 +138,9 @@ const server = http.createServer((req, res) => {
     if (failures) console.log(await page.locator('.cell.bad').allInnerTexts());
     const contactResults = await page.evaluate(() => window.__testResults);
     console.log(contactResults);
-    assert.equal(contactResults.finialChecks,12,'finial mounting matrix must execute');
-    assert.equal(contactResults.baseChecks,13,'base joint matrix must execute');
-    assert.equal(contactResults.assemblyChecks,144,'assembly matrix must execute');
+    assert.equal(contactResults.finialChecks,60,'finial mounting matrix must execute');
+    assert.equal(contactResults.baseChecks,25,'base joint matrix must execute');
+    assert.equal(contactResults.assemblyChecks,252,'assembly matrix must execute');
     const negativeControls = await page.evaluate(() => {
       choose('post', 0); choose('base', 1); choose('finial', 3);
       choose('bracket', 1); choose('config', 0);
