@@ -358,8 +358,11 @@ face starts below the complete bracket envelope plus 1.5 inches of clearance.
 With no bracket, the face-to-face gap is 1.5 inches.
 
 Lettering is measured in the browser's actual font and reduced independently to fit
-each blade, with eight units of horizontal inset. No external font is required. Very
-long names still become small; vendor lettering limits are not yet modeled.
+each blade, with eight units of horizontal inset. No external font is required. The
+current validity rule uses rendered capital-H ink height as Couyon's provisional
+interpretation of the supplied 4 in minimum. It is not a vendor-specified measurement
+method. A name that cannot fit at the minimum becomes an explicit conflict and blocks
+print and SVG export. See `docs/PROVENANCE.md` for source scope and confidence rules.
 
 ---
 

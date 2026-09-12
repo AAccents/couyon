@@ -45,14 +45,20 @@ const server = http.createServer((req, res) => {
     await page.selectOption('#bracket', '0');
     await page.screenshot({ path: path.join(output, 'u-channel.png'), fullPage: true });
     await page.fill('#street1', 'W'.repeat(60));
-    await page.fill('#street2', '<Oak & Pine>');
-    assert.equal(await page.locator('[data-part="street-text"][data-street="1"]').textContent(), '<Oak & Pine>');
+    assert.equal(await page.locator('[data-part="street-text"][data-street="0"]').textContent(), 'REVIEW NAME');
+    assert.equal(await page.locator('#exportProof').isDisabled(), true);
+    assert.equal(await page.evaluate(() => exportSVG()), false, 'direct export must also reject conflicts');
+    assert.equal(await page.evaluate(() => printProof()), false, 'direct print must reject conflicts');
+    await page.screenshot({ path: path.join(output, 'lettering-conflict.png'), fullPage: true });
+    await page.fill('#street1', 'Oak Ln');
+    await page.fill('#street2', 'A&B <C>');
+    assert.equal(await page.locator('[data-part="street-text"][data-street="1"]').textContent(), 'A&B <C>');
     const boundsFit = await page.evaluate(() => [...document.querySelectorAll('[data-part="street-text"]')].every(t => {
       const b = document.querySelector(`[data-part="blade"][data-street="${t.dataset.street}"]`).getBBox();
       const r = t.getBBox();
       return r.x >= b.x+6 && r.x+r.width <= b.x+b.width-6;
     }));
-    assert.ok(boundsFit, 'long and escaped names must fit their individual blades');
+    assert.ok(boundsFit, 'accepted names must fit their individual blades');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export SVG' }).click();
     const download = await downloadPromise;
@@ -60,7 +66,14 @@ const server = http.createServer((req, res) => {
     await download.saveAs(exported);
     const exportCheck = await page.evaluate(source => {
       const doc = new DOMParser().parseFromString(source, 'image/svg+xml');
-      return !doc.querySelector('parsererror') && !!doc.querySelector('title') &&
+      const integrity = JSON.parse(doc.querySelector('metadata').textContent);
+      const disclosure = doc.querySelector('desc').textContent;
+      return !doc.querySelector('parsererror') && !!doc.querySelector('title') && !integrity.blocked &&
+        integrity.components.post.presentation.widthIn === 2.5 &&
+        !('widthIn' in integrity.components.post.dimensions) &&
+        integrity.components.blade.lettering.applicability === 'project-guideline' &&
+        integrity.measurement.includes('Capital-H') &&
+        disclosure.includes('Capital-H') && disclosure.includes('Visual fit does not establish') &&
         doc.documentElement.textContent.includes('Not for fabrication') &&
         doc.querySelectorAll('[data-part="blade"]').length === 2;
     }, fs.readFileSync(exported, 'utf8'));
@@ -69,11 +82,14 @@ const server = http.createServer((req, res) => {
     await page.goto(url);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile page overflow');
     await page.screenshot({ path: path.join(output, 'mobile.png'), fullPage: true });
+    await page.fill('#street1', 'Oak Ln');
+    await page.fill('#street2', 'Pine St');
     await page.emulateMedia({ media: 'print' });
     assert.equal(await page.locator('.controls').isVisible(), false);
     await page.pdf({ path: path.join(output, 'proof.pdf'), format: 'Letter', printBackground: true });
     await page.emulateMedia({ media: 'screen' });
     await page.setViewportSize({ width: 1440, height: 1100 });
+    await require('./integrity.cjs')(page,output);
     await page.goto(url + '/test.html');
     await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Base joint:'), null, { timeout: 60000 }).catch(async e => {
       console.error(await page.locator('body').innerText());

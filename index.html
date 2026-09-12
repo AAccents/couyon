@@ -39,6 +39,11 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 td{border-top:1px solid #edf0f2;padding:8px 6px;vertical-align:top}
 td:first-child{width:32%;color:var(--muted);font-weight:700}
 .note{font-size:11px;color:var(--muted);line-height:1.45;margin-top:12px}
+.lettering-status{font-size:12px;line-height:1.45;white-space:pre-line;overflow-wrap:anywhere;margin-top:10px}
+.conflict{color:#9b3413;background:#fff4e8;border-left:3px solid #d97706;padding:8px}
+input[aria-invalid="true"]{border-color:#d97706}
+button:disabled{opacity:.5;cursor:not-allowed}
+td{overflow-wrap:anywhere}
 @media(max-width:900px){.app{grid-template-columns:1fr}.controls{border-right:0;border-bottom:1px solid var(--line)}}
 @media print{
  body{background:white}
@@ -46,6 +51,10 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
  .app{display:block}
  .previewWrap{padding:0}
  .card{border:0;box-shadow:none}
+ .canvas{min-height:0;padding:8px}
+ .canvas svg{max-height:470px}
+ td{padding:5px 6px}
+ body[data-proof-blocked="true"] .canvas{display:none}
 }
 </style>
 </head>
@@ -67,13 +76,13 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
   <div class="section">
     <h2>Street Names</h2>
     <label>Primary Street</label>
-    <input id="street1" value="Madison Ave">
+    <input id="street1" value="Oak Ave">
     <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-top:7px">
       <input id="noStreet1" type="checkbox" style="width:auto;padding:0;margin:0">
       No primary street
     </label>
     <label>Cross Street</label>
-    <input id="street2" value="Washington St">
+    <input id="street2" value="Pine St">
     <label style="display:flex;align-items:center;gap:8px;font-weight:600;margin-top:7px">
       <input id="noStreet2" type="checkbox" style="width:auto;padding:0;margin:0">
       No cross street
@@ -83,6 +92,8 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
       <div><label>Configuration</label><select id="config"></select></div>
     </div>
     <div class="note" id="streetHint">Both street faces are shown open for approval. Inverted swaps the upper street; Offset moves the blades toward their ends.</div>
+    <div id="letteringStatus" class="lettering-status" role="status" aria-live="polite"></div>
+    <div class="note" id="letteringMethod"></div>
   </div>
   <div class="section">
     <h2>Sign Appearance</h2>
@@ -115,8 +126,8 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <div class="note" id="systemHint" role="status"></div>
   </div>
   <div class="actions">
-    <button class="primary" onclick="window.print()">Print / Save PDF</button>
-    <button class="secondary" onclick="exportSVG()">Export SVG</button>
+    <button id="printProof" class="primary" onclick="printProof()">Print / Save PDF</button>
+    <button id="exportProof" class="secondary" onclick="exportSVG()">Export SVG</button>
   </div>
   <div class="note">
     Select the assembly, review the street names, then print or export your proof. Component artwork is representative; confirm vendor fit before ordering.
@@ -136,6 +147,8 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <div class="canvas">
       <svg id="proof" role="img" aria-label="Street name system concept proof" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
         <title>Street Name System — Concept Proof</title>
+        <desc id="proofDescription"></desc>
+        <metadata id="proofIntegrity"></metadata>
         <rect width="900" height="620" fill="#f4f6f8"/>
 
         <g id="assembly"></g>
@@ -150,7 +163,9 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
         <tr><td>Finial</td><td id="sumFinial"></td></tr>
         <tr><td>Base</td><td id="sumBase"></td></tr>
         <tr><td>Configuration</td><td id="sumConfig"></td></tr>
+        <tr><td>Lettering</td><td><div id="sumLettering" class="lettering-status"></div><div id="sumLetteringMethod" class="note"></div></td></tr>
       </table>
+      <div class="note">Visual fit does not establish orderable compatibility. Confirm the selected vendor variants and mounting details. Colors are representative.</div>
     </div>
   </section>
 </main>
@@ -280,7 +295,488 @@ function mountScale(asset, postPxW) {
   return (postPxW * COLLAR_RATIO) / asset.mateWidth;
 }
 
-const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"NONE","label":"None","style":"none"},{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","widthIn":2.375,"profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","widthIn":2.375,"profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","widthIn":4,"profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","widthIn":2.5,"profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"NONE","label":"None","style":"none","heightIn":0,"height":"0 in","family":"None"},{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","heightIn":27,"height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","heightIn":29,"height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","heightIn":8.25,"height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
+// Sources refer to the supplied packet, not inferred product equivalence.
+// Source documents stay outside this public repository; see docs/PROVENANCE.md.
+const SOURCES = {
+  map: 'Couyon Component Confidence Map v1',
+  oppBlades: 'Curated PDF p.5 / OPP p.5',
+  oppRound: 'Curated PDF p.13 / OPP p.61',
+  oppSquare: 'Curated PDF p.14 / OPP p.62',
+  oppFinials: 'Curated PDF p.15 / OPP p.63',
+  cpc16: 'Curated PDF p.18 / CPC p.16',
+  cpc17: 'Curated PDF p.19 / CPC p.17'
+};
+const DATA = {
+  "blades": [
+    {
+      "sku": "AA-9X30",
+      "label": "9 in Standard",
+      "size": "30",
+      "shape": "rectangle",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {
+        "widthIn": {
+          "value": 30,
+          "confidence": "vendor-supported",
+          "source": "oppBlades"
+        },
+        "heightIn": {
+          "value": 9,
+          "confidence": "vendor-supported",
+          "source": "oppBlades"
+        }
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Geometric proof face; nominal 30 × 9 size is shown in OPP references."
+      },
+      "lettering": {
+        "minimumIn": {
+          "value": 4,
+          "confidence": "vendor-supported",
+          "source": "cpc16"
+        },
+        "applicability": "project-guideline",
+        "note": "CPC 30 in guidance adopted for this AA blade; product equivalence is unverified."
+      }
+    }
+  ],
+  "brackets": [
+    {
+      "sku": "NONE",
+      "label": "None",
+      "style": "none"
+    },
+    {
+      "sku": "OB1227J",
+      "label": "Dogwood — for 30 in blade",
+      "size": "30",
+      "style": "dogwood",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc16",
+        "note": "Mount variant must be specified separately."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Provisional bracket artwork; reach adapts for presentation."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc16",
+        "note": "Physical reach, depth and selected mounting interface unverified."
+      }
+    },
+    {
+      "sku": "OB1227C",
+      "label": "Dogwood — for 36 in blade",
+      "size": "36",
+      "style": "dogwood",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc16",
+        "note": "Mount variant must be specified separately."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Provisional bracket artwork; reach adapts for presentation."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc16",
+        "note": "Physical reach, depth and selected mounting interface unverified."
+      }
+    },
+    {
+      "sku": "OB1228J",
+      "label": "Scroll — for 30 in blade",
+      "size": "30",
+      "style": "scroll",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc16",
+        "note": "Mount variant must be specified separately."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Provisional bracket artwork; reach adapts for presentation."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc16",
+        "note": "Physical reach, depth and selected mounting interface unverified."
+      }
+    },
+    {
+      "sku": "OB1228C",
+      "label": "Scroll — for 36 in blade",
+      "size": "36",
+      "style": "scroll",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc16",
+        "note": "Mount variant must be specified separately."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Provisional bracket artwork; reach adapts for presentation."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc16",
+        "note": "Physical reach, depth and selected mounting interface unverified."
+      }
+    }
+  ],
+  "finials": [
+    {
+      "sku": "NONE",
+      "label": "None",
+      "style": "none"
+    },
+    {
+      "sku": "AA-PINEAPPLE-V1",
+      "label": "Pineapple Finial",
+      "style": "pineapple",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Reference-based pineapple proportions; fine detail partly inferred."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "oppFinials",
+        "note": "OPP 3DP reference fits 3 in round; selected AA socket unverified."
+      }
+    },
+    {
+      "sku": "AA-BALL-V1",
+      "label": "Ball Finial",
+      "style": "ball",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Reference-derived ball artwork; socket normalized for proof."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "oppFinials",
+        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
+      }
+    },
+    {
+      "sku": "AA-DOME-V1",
+      "label": "Dome Cap",
+      "style": "dome",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Reference-derived dome artwork; socket normalized for proof."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "oppFinials",
+        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
+      }
+    },
+    {
+      "sku": "OPA9516MD",
+      "label": "Spear Finial (placeholder)",
+      "style": "spear",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc16",
+        "note": ""
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Placeholder spear artwork; physical dimensions unverified."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc16",
+        "note": "Selected socket fit unverified; catalog variants differ by post size/profile."
+      }
+    }
+  ],
+  "posts": [
+    {
+      "sku": "TCP-238-BPP",
+      "label": "TCP Standard — 2 3/8 Black Powder Post — 12 ft",
+      "height": "12 ft",
+      "profile": "round238",
+      "family": "TCP Standard",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {
+        "widthIn": {
+          "value": 2.375,
+          "confidence": "vendor-supported",
+          "source": "oppRound"
+        }
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Simple geometric post artwork."
+      },
+      "presentation": {
+        "lengthFt": 12
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "map",
+        "note": "Length is a project preset; supplied product/length combination unverified."
+      }
+    },
+    {
+      "sku": "TCP-238-BPP-13",
+      "label": "TCP Standard — 2 3/8 Black Powder Post — 13 ft",
+      "height": "13 ft",
+      "profile": "round238",
+      "family": "TCP Standard",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {
+        "widthIn": {
+          "value": 2.375,
+          "confidence": "vendor-supported",
+          "source": "oppRound"
+        }
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Simple geometric post artwork."
+      },
+      "presentation": {
+        "lengthFt": 13
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "map",
+        "note": "Length is a project preset; supplied product/length combination unverified."
+      }
+    },
+    {
+      "sku": "ROUZAN-4SQ",
+      "label": "Rouzan Style — 4 in Square Post — 12 ft",
+      "height": "12 ft",
+      "profile": "square4",
+      "family": "Rouzan",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {
+        "widthIn": {
+          "value": 4,
+          "confidence": "vendor-supported",
+          "source": "oppSquare"
+        }
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Simple geometric post artwork."
+      },
+      "presentation": {
+        "lengthFt": 12
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "map",
+        "note": "Length is a project preset; supplied product/length combination unverified."
+      }
+    },
+    {
+      "sku": "AA-UCHANNEL-GALV",
+      "label": "Galvanized U-Channel Post — 12 ft",
+      "height": "12 ft",
+      "profile": "uchannel",
+      "family": "Standard Traffic",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {},
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Simple geometric post artwork."
+      },
+      "presentation": {
+        "lengthFt": 12,
+        "widthIn": 2.5
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "map",
+        "note": "2½ in width and 12 ft length are representative pending verification."
+      }
+    }
+  ],
+  "bases": [
+    {
+      "sku": "NONE",
+      "label": "None",
+      "style": "none",
+      "family": "None"
+    },
+    {
+      "sku": "TCP-CORINTHIAN",
+      "label": "TCP Standard — Corinthian Base",
+      "style": "corinthian",
+      "family": "TCP Standard",
+      "identity": {
+        "confidence": "reference-derived",
+        "source": "map",
+        "note": "Project reference; vendor SKU equivalence unverified."
+      },
+      "dimensions": {},
+      "presentation": {
+        "heightIn": 27
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Representative base and throat fit; 27 in proof height is provisional."
+      },
+      "fit": {
+        "confidence": "unknown",
+        "source": "cpc17",
+        "note": "CPC OPA9993 is 27 in for 3 in round; equivalence to this project base is unverified."
+      }
+    },
+    {
+      "sku": "SB46",
+      "label": "Rouzan Style — SB46 Base (placeholder)",
+      "style": "sb46",
+      "family": "Rouzan",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "oppSquare",
+        "note": ""
+      },
+      "dimensions": {
+        "heightIn": {
+          "value": 29,
+          "confidence": "vendor-supported",
+          "source": "oppSquare"
+        }
+      },
+      "artwork": {
+        "confidence": "provisional",
+        "source": "map",
+        "note": "Provisional SB46 silhouette; not fabrication geometry."
+      },
+      "fit": {
+        "confidence": "vendor-supported",
+        "source": "oppSquare",
+        "note": "Catalog SB46 fits 4 in square; other interfaces unverified."
+      }
+    },
+    {
+      "sku": "OPR123BK8397",
+      "label": "8 1/4 in Welded Base (assembly reference)",
+      "style": "short",
+      "family": "Other",
+      "identity": {
+        "confidence": "vendor-supported",
+        "source": "cpc17",
+        "note": ""
+      },
+      "dimensions": {
+        "heightIn": {
+          "value": 8.25,
+          "confidence": "vendor-supported",
+          "source": "cpc17"
+        }
+      },
+      "artwork": {
+        "confidence": "representative",
+        "source": "map",
+        "note": "Representative welded-base silhouette."
+      },
+      "fit": {
+        "confidence": "vendor-supported",
+        "source": "cpc17",
+        "note": "Catalog item is welded to a 12 ft post, not a universal separate base. Other combinations are concepts only."
+      }
+    }
+  ],
+  "configs": [
+    "Standard",
+    "Inverted",
+    "Offset"
+  ]
+};
+function physicalValue(component, name) {
+  const fact = component.dimensions?.[name];
+  return fact?.confidence === 'vendor-supported' && SOURCES[fact.source] &&
+    Number.isFinite(fact.value) && fact.value > 0 ? fact.value : null;
+}
+function proofDimension(component, name) {
+  const physical = physicalValue(component,name);
+  if (physical !== null) return physical;
+  const fallback = component.presentation?.[name];
+  return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
+}
+function componentSummary(component) {
+  if (component.style === 'none') return 'None';
+  const artwork = component.artwork || { confidence:'unknown', note:'Artwork requires verification.' };
+  const labels = { widthIn:'width', heightIn:'height', reachIn:'reach', lengthFt:'length' };
+  const facts = Object.entries(component.dimensions || {}).filter(([name]) => physicalValue(component,name) !== null)
+    .map(([name,fact]) => `${labels[name] || name} ${fact.value} ${name.endsWith('Ft') ? 'ft' : 'in'} vendor-supported`);
+  const fallbacks = Object.entries(component.presentation || {}).filter(([name]) => physicalValue(component,name) === null)
+    .map(([name,value]) => `${labels[name] || name} ${value} ${name.endsWith('Ft') ? 'ft' : 'in'} representative`);
+  const identity = component.identity?.confidence && component.identity.confidence !== 'vendor-supported'
+    ? `identity ${component.identity.confidence}` : '';
+  const fit = component.fit ? (component.fit.confidence === 'vendor-supported' ? 'stated fit vendor-supported' : 'fit unverified') : '';
+  const artworkDisclosure = `${artwork.confidence} artwork${artwork.note ? ` (${artwork.note})` : ''}`;
+  return `${component.sku} — ${component.label} · ${[identity,...facts,...fallbacks,artworkDisclosure,fit].filter(Boolean).join('; ')}.`;
+}
 const $ = id => document.getElementById(id);
 function fillSelect(id, items, labelFn) {
   const sel=$(id); sel.innerHTML="";
@@ -321,7 +817,8 @@ function bladePath(x,y,w,h,shape) {
 }
 // Source artwork spans 96 units horizontally and 32 vertically, including stroke.
 // Its rail is at y=0. Fit that rail beneath the blade, on its projecting side.
-const BRACKET_GEOMETRY = { reach: 96, depth: 32, railHalfWidth: 4.5 };
+const BRACKET_GEOMETRY = { reach: 96, depth: 32, railHalfWidth: 4.5,
+  physicalReachUnits: { dogwood:90.5, scroll:96 } };
 function bracketMarkup(style, x, y, dir=1) {
   if(style==="none") return "";
   const s=dir;
@@ -338,8 +835,17 @@ function bracketMarkup(style, x, y, dir=1) {
           fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
     <circle cx="${x+55*s}" cy="${y+20}" r="6" fill="none" stroke="#111" stroke-width="4"/>`;
 }
+function bracketSizing(bracket, presentationReachPx, pxPerIn) {
+  if (bracket.style === 'none') return { scale:0, mode:'none', physicalReachIn:null };
+  // A sourced reach means axis-to-outer-tip, including stroke. Never infer it
+  // from the 30/36 blade association, or clamp it to make the layout look valid.
+  const reachIn = physicalValue(bracket,'reachIn');
+  return { scale:reachIn === null ? presentationReachPx/BRACKET_GEOMETRY.reach
+      : reachIn*pxPerIn/BRACKET_GEOMETRY.physicalReachUnits[bracket.style],
+    mode:reachIn === null ? 'presentation' : 'physical', physicalReachIn:reachIn };
+}
 function streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH, pxPerIn,
-                        config, bracketStyle, noStreet1, noStreet2 }) {
+                        config, bracket, noStreet1, noStreet2 }) {
   const active = [!noStreet1, !noStreet2];
   const count = active.filter(Boolean).length;
   // Spread view: both perpendicular faces are opened toward the viewer.
@@ -352,8 +858,9 @@ function streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH, pxPerIn,
     const dir = i === first ? -1 : 1;
     const cx = postX + dir * offset;
     const reach = bladePxW / 2 + offset - 3 * pxPerIn;
-    const bracketScale = bracketStyle === 'none' ? 0 : reach / BRACKET_GEOMETRY.reach;
-    return { index: i, active: active[i], cx, dir, bracketScale };
+    const sizing = bracketSizing(bracket,reach,pxPerIn);
+    return { index: i, active: active[i], cx, dir, bracketScale:sizing.scale,
+      bracketSizingMode:sizing.mode, physicalReachIn:sizing.physicalReachIn };
   });
   let top = postTopY + 3 * pxPerIn;
   for (const i of [first, 1 - first]) {
@@ -375,13 +882,91 @@ function mountedBracket(style, station, postX, postPxW) {
     <g transform="translate(${postX} ${railY}) scale(${scale})">${bracketMarkup(style,0,0,dir)}</g>
   </g>`;
 }
-function fitStreetLabels() {
+// CPC states minimum LETTER height, not font-size. Its mixed-case convention is
+// unspecified. H ink height is our explicit proof proxy, not vendor certification.
+const LETTERING_METHOD = 'Capital-H ink-height proxy in the rendered font; mixed-case interpretation and AA applicability require vendor confirmation.';
+const letteringCanvas = document.createElement('canvas');
+function fitStreetLabels(blade, pxPerIn, bladePxH) {
+  const results = [];
+  const rule = blade.lettering?.minimumIn;
+  const minimumIn = physicalValue({ dimensions:{minimumIn:rule} },'minimumIn');
   document.querySelectorAll('[data-part="street-text"]').forEach(text => {
-    // Measure the actual font, separately for each name. Never enlarge short names.
-    const width = text.getComputedTextLength();
-    const available = +text.dataset.available;
-    if (width > available) text.setAttribute('font-size', +text.getAttribute('font-size') * available / width);
+    const name = text.textContent.trim(), index = +text.dataset.street;
+    const result = { index, name, status:'review', minimumIn, capHeightIn:null,
+      method:'capital-H-ink', applicability:blade.lettering?.applicability || 'unknown' };
+    const css = getComputedStyle(text), ctx = letteringCanvas.getContext('2d');
+    if (ctx) ctx.font = `${css.fontStyle} ${css.fontWeight} 1000px ${css.fontFamily}`;
+    const h = ctx?.measureText('H');
+    const capPerFont = h ? (h.actualBoundingBoxAscent+h.actualBoundingBoxDescent)/1000 : NaN;
+    text.setAttribute('font-size',1000);
+    const bounds = text.getBBox();
+    const widthPerFont = Math.max(text.getComputedTextLength(),bounds.width)/1000;
+    const boxHeightPerFont = bounds.height/1000;
+    if (!name) result.status = 'missing';
+    else if (minimumIn !== null && capPerFont > 0 && widthPerFont > 0 && boxHeightPerFont > 0) {
+      const minimumFont = minimumIn*pxPerIn/capPerFont;
+      // Keep a modest visual margin above the minimum. A 5.2 in target could not
+      // fit vertically inside a 9 in blade, which made the normal state unreachable.
+      const preferredFont = (minimumIn+.5)*pxPerIn/capPerFont;
+      const maxFont = Math.min(+text.dataset.available/widthPerFont, (bladePxH-8)/boxHeightPerFont);
+      result.requiredWidthIn = minimumFont*widthPerFont/pxPerIn;
+      if (maxFont < minimumFont) result.status = 'conflict';
+      else {
+        const fontSize = Math.min(preferredFont,maxFont);
+        text.setAttribute('font-size',fontSize);
+        result.status = fontSize < preferredFont-.001 ? 'adjusted' : 'normal';
+        result.fontSize = fontSize;
+        result.capHeightIn = fontSize*capPerFont/pxPerIn;
+      }
+    }
+    if (!['normal','adjusted'].includes(result.status)) {
+      // Keep the blade visibly unresolved without showing secretly undersized
+      // actual lettering. The input and warning retain the full proposed name.
+      text.textContent = 'REVIEW NAME';
+      text.setAttribute('font-size',11);
+    }
+    text.dataset.letteringStatus = result.status;
+    text.dataset.originalName = name;
+    results.push(result);
   });
+  return results;
+}
+function letteringMessage(result) {
+  const street = result.index === 0 ? 'Primary' : 'Cross';
+  if (result.status === 'missing') return `${street}: enter a name or select No street.`;
+  if (result.status === 'review') return `${street}: lettering cannot be evaluated; minimum or font metrics need verification.`;
+  if (result.status === 'conflict') return `${street} — ${result.name}: cannot fit the ${result.minimumIn} in minimum. Name withheld; resolve before export. Review a vendor-approved name, font or blade.`;
+  return `${street} — ${result.name}: ${result.status === 'adjusted' ? 'Adjusted within minimum' : 'Fits proof check'}; H-ink height ≈ ${result.capHeightIn.toFixed(2)} in (minimum ${result.minimumIn} in).`;
+}
+function updateIntegrity({ blade, bracket, post, finial, base, stations, pxPerIn, bladePxH, topSectionBottomY }) {
+  const lettering = fitStreetLabels(blade,pxPerIn,bladePxH);
+  const layoutConflict = stations.some(s=>s.active && s.bottom >= topSectionBottomY-2);
+  const blocked = layoutConflict || lettering.some(r=>!['normal','adjusted'].includes(r.status));
+  const message = (lettering.length ? lettering.map(letteringMessage).join('\n') : 'No street-name lettering selected.') +
+    (layoutConflict ? '\nPhysical bracket reach exceeds this proof layout; review required.' : '');
+  for (const id of ['letteringStatus','sumLettering']) {
+    $(id).textContent = message;
+    $(id).classList.toggle('conflict',blocked);
+  }
+  const method = lettering.length ? `${blade.lettering?.note || 'Lettering requirement unknown.'} ${LETTERING_METHOD}` : '';
+  $('letteringMethod').textContent = method;
+  $('sumLetteringMethod').textContent = method;
+  for (const index of [0,1]) {
+    const conflict = lettering.some(r=>r.index===index && !['normal','adjusted'].includes(r.status));
+    $('street'+(index+1)).setAttribute('aria-invalid',String(conflict));
+    $('street'+(index+1)).setAttribute('aria-describedby','letteringStatus letteringMethod');
+  }
+  $('printProof').disabled = $('exportProof').disabled = blocked;
+  document.body.dataset.proofBlocked = String(blocked);
+  const components = { post, finial, base };
+  if (lettering.length) Object.assign(components,{blade,bracket});
+  const integrity = { qualification:'Concept Proof — Not for fabrication', blocked, lettering,
+    measurement:method, components, sources:SOURCES,
+    compatibility:'Visual fit does not establish orderable compatibility.' };
+  $('proofIntegrity').textContent = JSON.stringify(integrity);
+  $('proofDescription').textContent = [integrity.qualification,integrity.compatibility,
+    ...Object.values(components).map(componentSummary),message,method].join('\n');
+  return integrity;
 }
 function updateStreetControls() {
   const no1 = $("noStreet1").checked;
@@ -477,7 +1062,7 @@ function reconcileSelections() {
   const baseSel     = $("base");
   Array.from(baseSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==baseNoneIdx; });
   if(!decorOK && baseNoneIdx>=0) baseSel.value=String(baseNoneIdx);
-  $("systemHint").textContent = decorOK ? "" : "U-channel uses no decorative base or finial. Width is a representative 2½ in; confirm the supplied post specification.";
+  $("systemHint").textContent = decorOK ? "" : "Couyon offers U-channel without a decorative base or finial. See the post summary for provisional dimensions.";
 }
 function render() {
   const blade=DATA.blades[+$("blade").value];
@@ -489,22 +1074,20 @@ function render() {
   const face=$("face").value, letters=$("letters").value;
   const noStreet1=$("noStreet1").checked;
   const noStreet2=$("noStreet2").checked;
-  const s1=$("street1").value || "STREET NAME";
-  const s2=$("street2").value || "";
+  const s1=$("street1").value.trim();
+  const s2=$("street2").value.trim();
   // -------------------------
   // Dimension-driven geometry
   // -------------------------
   // Catalog post lengths: 12' / 13' = 144 / 156 in.
-  const baseIn = base.heightIn;
-  // Blade heights from catalog dimensions.
-  const dims = blade.dims.split("x").map(x=>parseFloat(x.trim()));
-  const bladeWIn = dims[0];
-  const bladeHIn = dims[1];
+  const baseIn = base.style === 'none' ? 0 : proofDimension(base,'heightIn');
+  const bladeWIn = proofDimension(blade,'widthIn');
+  const bladeHIn = proofDimension(blade,'heightIn');
   // v0.2: one uniform local scale for visible hardware; full post height is shown with a break.
   const pxPerIn = 5.0;
   const groundY = 552;
   const postX = 450;
-  const postPxW = post.widthIn * pxPerIn;
+  const postPxW = proofDimension(post,'widthIn') * pxPerIn;
   const basePxH = baseIn*pxPerIn;
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
@@ -525,7 +1108,7 @@ function render() {
   const lowerSectionTopY = Math.max(topSectionBottomY + MIN_COMPRESSION,
     Math.min(topSectionBottomY + MAX_COMPRESSION, baseTopY - EXPOSED_RUN));
   const stations = streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH,
-    pxPerIn, config, bracketStyle: bracket.style, noStreet1, noStreet2 });
+    pxPerIn, config, bracket, noStreet1, noStreet2 });
   const [primary, cross] = stations;
   const b1cx=primary.cx, b1cy=primary.cy, b2cx=cross.cx, b2cy=cross.cy;
   const x1=b1cx-bladePxW/2, y1=b1cy-bladePxH/2;
@@ -666,20 +1249,20 @@ function render() {
     <text x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
           font-family="Arial,sans-serif" font-size="14" fill="#68707b">${post.height} post, shown broken</text>
   `
-  fitStreetLabels();
+  const integrity = updateIntegrity({ blade,bracket,post,finial,base,stations,pxPerIn,bladePxH,topSectionBottomY });
   $("proofTitle").textContent=$("job").value || "Street Name System";
   $("proof").querySelector('title').textContent = $("proofTitle").textContent + ' — Concept Proof';
   $("proof").setAttribute('aria-label', $("proofTitle").textContent + ' — Concept Proof');
-  $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : `${blade.label} — ${blade.dims}`;
-  $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : `${bracket.sku} — ${bracket.label}`;
-  $("sumPost").textContent=`${post.sku} — ${post.label}`;
-  $("sumFinial").textContent=`${finial.sku} — ${finial.label}` + (finialAsset ? " · Representative socket-scaled artwork; confirm vendor fit." : "");
-  $("sumBase").textContent=`${base.sku} — ${base.label}` + (base.style === 'corinthian' && postPxW * COLLAR_RATIO > 16
-    ? " · Representative throat widened to clear post; confirm vendor fit." : "");
+  $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : componentSummary(blade);
+  $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : componentSummary(bracket);
+  $("sumPost").textContent=componentSummary(post);
+  $("sumFinial").textContent=componentSummary(finial);
+  $("sumBase").textContent=componentSummary(base);
   $("sumConfig").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : (noStreet1 || noStreet2) ? "Single street — centered" : `${config} · Both street faces shown in spread view`;
 
   // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
   window.__proofDebug = {
+    integrity,
     stations,
     collarRatio: COLLAR_RATIO,
     post:   post.sku,
@@ -714,6 +1297,9 @@ document.querySelectorAll('label').forEach(label => {
 });
 document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",update));
 update();
+document.fonts.ready.then(update);
+document.fonts.addEventListener('loadingdone',update);
+window.addEventListener('beforeprint',update);
 async function updateBuildInfo() {
   const el=$("buildInfo");
   if(!el) return;
@@ -733,7 +1319,15 @@ async function updateBuildInfo() {
 }
 updateBuildInfo();
 
+function printProof() {
+  update();
+  if (window.__proofDebug.integrity.blocked) return false;
+  window.print();
+  return true;
+}
 function exportSVG() {
+  update();
+  if (window.__proofDebug.integrity.blocked) return false;
   const svg=$("proof").cloneNode(true);
   const serializer=new XMLSerializer();
   let src=serializer.serializeToString(svg);
@@ -744,6 +1338,7 @@ function exportSVG() {
   a.download="AA_Street_Name_Proof.svg";
   a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  return true;
 }
 </script>
 </body>
