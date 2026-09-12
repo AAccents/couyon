@@ -33,10 +33,13 @@ confirm which revision is running.
 ## What it does
 
 - Pick a blade style, bracket, finial, post, and base from the component catalog
-- Enter customer/development name and one or two street names (either can be omitted)
+- Enter a proof title and one or two street names (either can be omitted)
 - Choose sign face and lettering colors
 - Live SVG preview scaled from real catalog dimensions (5 px per inch), with the
   post shown broken so full 12 ft / 13 ft heights fit on the page
+- Declared spread view with Standard / Inverted / Offset layouts; single streets
+  center automatically and decorative brackets attach beneath their blades
+- Lettering fits each blade independently; incompatible bracket sizes are disabled
 - Component summary table with SKUs for the spec sheet
 - **Print / Save PDF** — print stylesheet hides the controls and prints the proof card only
 - **Export SVG** — downloads `AA_Street_Name_Proof.svg` for vector editing
@@ -45,7 +48,8 @@ confirm which revision is running.
 
 Components live in the `DATA` object near the top of the `<script>` block in
 `index.html`. Adding a part is a matter of adding an entry with its `sku`,
-`label`, and geometry fields.
+`label`, and geometry fields, then checking the contact sheet. Posts use numeric
+`widthIn`; bases use `heightIn`; display labels never drive those dimensions.
 
 Finial artwork (pineapple, ball, dome cap) is hand-built SVG stored in the
 `AA_*_SVG` constants. The Rouzan 4 in square post and SB46 base are selectable
@@ -57,11 +61,25 @@ are traced.
 - Rouzan SB46 base and 4 in square post need real vectors
 - Only one blade size (9 x 30) is in the catalog so far
 - Spear finial is a placeholder shape
+- Vendor fit is not yet verified across the catalog. Normalized finial artwork and
+  widened base throats are disclosed in the summary; U-channel width is representative
+- Very long street names fit but can become too small; vendor lettering limits remain open
 - Proof output is marked *Concept Proof — Not for fabrication*; dimensioned
   shop drawings are out of scope for the prototype
 
 
 ## Development workflow
+
+For renderer validation, serve this directory locally and open `test.html`. The contact
+sheet checks finial and base joints using rasterized SVG, plus 144 complete-assembly
+combinations using measured geometry. See [rendering architecture](docs/ARCHITECTURE.md).
+
+An optional automated runner is available with Playwright resolvable by Node and Chrome
+installed: `node tests/validate.cjs`. It starts and stops its own loopback server and
+browser. Screenshots and proof exports go to a temporary directory printed by the runner;
+set `PROOF_TEST_OUTPUT` to choose another directory, or `CHROME_CHANNEL=msedge` to use Edge.
+These are developer tools, not application dependencies. The app still opens directly
+from `index.html` without installation.
 
 Treat `main` as the canonical current Couyon source. Before editing, fetch the
 latest repository version. After a meaningful, tested change, commit it with a

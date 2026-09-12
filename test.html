@@ -111,7 +111,7 @@ const status = document.getElementById('status');
 
 const VIEWS = {
   finial: '392 62 116 116',
-  top:    '330 70 240 300',
+  top:    '292 48 316 292',
   base:   '368 392 164 168',
   full:   '0 0 900 620',
 };
@@ -158,6 +158,7 @@ function grab(viewBox) {
   const src = D().getElementById('proof');
   const svg = src.cloneNode(true);
   svg.removeAttribute('id');
+  svg.querySelectorAll('[id]').forEach(n => n.removeAttribute('id'));
   svg.setAttribute('viewBox', viewBox);
   svg.removeAttribute('width');
   svg.removeAttribute('height');
@@ -460,6 +461,63 @@ function section(title, note) {
   return s;
 }
 
+// Inspect the actual SVG, not a second implementation of the station formulas.
+function assemblyInvariant(doc, dbg) {
+  const failures = [];
+  const check = (condition, name) => { if (!condition) failures.push(name); };
+  // getBBox() alone omits the element's own transform. Measure in proof space
+  // so a misplaced or mirrored component cannot pass on its local coordinates.
+  const bounds = node => {
+    const b = node.getBBox();
+    const matrix = doc.getElementById('proof').getCTM().inverse().multiply(node.getCTM());
+    const points = [[b.x,b.y],[b.x+b.width,b.y],[b.x,b.y+b.height],[b.x+b.width,b.y+b.height]]
+      .map(([x,y]) => new DOMPoint(x,y).matrixTransform(matrix));
+    const x = Math.min(...points.map(p=>p.x)), y = Math.min(...points.map(p=>p.y));
+    return { x, y, width: Math.max(...points.map(p=>p.x))-x, height: Math.max(...points.map(p=>p.y))-y };
+  };
+  const blades = [...doc.querySelectorAll('[data-part="blade"]')];
+  const brackets = [...doc.querySelectorAll('[data-part="bracket"]')];
+  const names = [...doc.querySelectorAll('[data-part="street-text"]')];
+  const expected = ['noStreet1','noStreet2'].filter(id => !doc.getElementById(id).checked).length;
+  check(blades.length === expected && names.length === expected, 'blade/name count');
+  check(brackets.length === (doc.getElementById('bracket').value === '0' ? 0 : expected), 'bracket count');
+  const boxes = blades.map(bounds).sort((a,b) => a.y-b.y);
+  if (boxes.length) check(Math.abs(boxes[0].y - 125) < .01, 'upper station');
+  if (boxes.length === 1) check(Math.abs(boxes[0].x + boxes[0].width/2 - 450) < .01, 'single centered');
+  if (boxes.length === 2) check(boxes[0].y + boxes[0].height + 2.5 < boxes[1].y, 'faces overlap');
+  if (boxes.length === 2) {
+    const upperStreet = blades.reduce((a,b) => bounds(a).y < bounds(b).y ? a : b);
+    check(upperStreet.dataset.street === (doc.getElementById('config').value === '1' ? '1' : '0'), 'street order');
+  }
+  for (const blade of blades) {
+    const b = bounds(blade);
+    const index = blade.dataset.street;
+    check(b.x <= 450-dbg.postPxW/2 && b.x+b.width >= 450+dbg.postPxW/2, 'blade misses post');
+    const label = bounds(names.find(n => n.dataset.street === index));
+    check(label.x >= b.x+6 && label.x+label.width <= b.x+b.width-6 &&
+          label.y >= b.y+2 && label.y+label.height <= b.y+b.height-2, 'lettering overflow');
+    const bracket = brackets.find(n => n.dataset.street === index);
+    if (bracket) {
+      const r = bounds(bracket);
+      check(r.x >= b.x-1 && r.x+r.width <= b.x+b.width+1, 'bracket wrong side');
+      check(r.y >= b.y+b.height-1 && r.y <= b.y+b.height+1, 'rail detached');
+      check(r.x < 450 && r.x+r.width > 450, 'bracket misses post');
+      check(r.y+r.height < dbg.topSectionBottomY-2, 'bracket reaches break');
+      for (const other of boxes) {
+        if (other.y > b.y) check(r.y+r.height+2 < other.y, 'bracket hits next blade');
+      }
+    }
+  }
+  const upper = doc.querySelector('[data-part="post-upper"]');
+  const base = doc.querySelector('[data-part="base"]');
+  check(!!(upper.compareDocumentPosition(base) & 4), 'base painted behind post');
+  check(dbg.lowerSectionTopY-dbg.topSectionBottomY <= 60, 'excessive break gap');
+  const assembly = bounds(doc.getElementById('assembly'));
+  check(assembly.x >= 0 && assembly.y >= 0 && assembly.x+assembly.width <= 900 &&
+        assembly.y+assembly.height <= 620, 'canvas clipping');
+  return { pass: failures.length === 0, failed: failures };
+}
+
 let runId = 0;
 
 async function build() {
@@ -553,8 +611,8 @@ async function build() {
     'The post passes behind the base and the base occludes it; the break marker must sit ' +
     'in the run of post above the base. "run" is the measured exposed post between the ' +
     'marker and the base top, "cover" the tightest margin by which the base outreaches ' +
-    'the post. Base widths still do not reference post diameter — that is the later ' +
-    'socket treatment, not this pass. See docs/ARCHITECTURE.md sections 7 and 14.');
+    'the post. The Corinthian throat clears the post interface while its outer ornament ' +
+    'and catalog height are retained. See docs/ARCHITECTURE.md sections 7 and 14.');
   const g2 = grid(cols);
 
   const bZoom = document.getElementById('zoom').value === 'finial'
@@ -589,6 +647,40 @@ async function build() {
   s2.appendChild(g2);
   out.appendChild(s2);
 
+  const s3 = section('Complete assemblies',
+    'All posts × all configurations × None / Dogwood / Scroll brackets × both, primary-only, ' +
+    'cross-only and neither street. Checks read SVG bounds for attachment, rail contact, ' +
+    'lettering, clearance and clipping. Representative two-street proofs are shown below.');
+  const g3 = grid(cols);
+  let aTotal = 0, aFail = 0;
+  const assemblyFailures = [];
+  for (let p = 0; p < POSTS.length; p++) {
+    choose('post', p);
+    choose('base', p === 2 ? 2 : p === 3 ? 0 : 1);
+    choose('finial', p === 2 ? 1 : p === 3 ? 0 : 3);
+    for (let c = 0; c < 3; c++) for (const bracket of [0,1,3]) for (let state = 0; state < 4; state++) {
+      choose('config', c);
+      choose('bracket', bracket);
+      toggle('noStreet1', !!(state & 1));
+      toggle('noStreet2', !!(state & 2));
+      const result = assemblyInvariant(D(), W().__proofDebug);
+      aTotal++;
+      const caption = POSTS[p] + ' / ' + opts('config')[c] + ' / ' + opts('bracket')[bracket] + ' / state ' + state;
+      if (!result.pass) { aFail++; assemblyFailures.push({ caption, failed: result.failed }); }
+      if (!result.pass || (state === 0 && bracket === (p === 3 ? 0 : 1))) {
+        const card = cell(opts('config')[c], POSTS[p], grab(VIEWS.full));
+        const metrics = document.createElement('div');
+        metrics.className = 'metrics ' + (result.pass ? 'r-ok' : 'r-bad');
+        metrics.textContent = result.pass ? 'Assembly PASS' : result.failed.join(', ');
+        card.appendChild(metrics);
+        if (!result.pass) card.classList.add('bad');
+        g3.appendChild(card);
+      }
+    }
+  }
+  s3.appendChild(g3);
+  out.appendChild(s3);
+
   // restore
   choose('base', 1);
 
@@ -603,8 +695,11 @@ async function build() {
     '</span>. Base joint: ' +
     '<span class="' + (bFail ? 'fail' : 'pass') + '">' +
     (bFail ? bFail + ' of ' + bTotal + ' FAIL' : bTotal + ' pass') +
-    '</span>.' + ((skipped + bSkipped) ? ' ' + (skipped + bSkipped) +
+    '</span>. Assembly: ' + (aTotal-aFail) + '/' + aTotal + ' pass.' + ((skipped + bSkipped) ? ' ' + (skipped + bSkipped) +
       ' invalid configurations skipped.' : '');
+  window.__testResults = { finialChecks: invTotal, finialFailures: invFail,
+    baseChecks: bTotal, baseFailures: bFail, assemblyChecks: aTotal, assemblyFailures,
+    invalidSkipped: skipped+bSkipped };
 }
 
 document.getElementById('zoom').addEventListener('change', build);

@@ -23,6 +23,8 @@ h1{font-size:20px;margin:0} .sub{font-size:12px;color:#b8bec7;margin-top:3px}
 .section h2{font-size:13px;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:.11em;margin:0 0 12px;color:#17191c;border:2px solid #c9cfd6;border-radius:8px;background:#f3f5f7;padding:8px 10px}
 label{display:block;font-size:12px;font-weight:700;margin:10px 0 5px}
 input,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--aa);outline-offset:2px}
+input:disabled,select:disabled{background:#f3f5f7;color:#6b7280}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 button{border:0;border-radius:8px;padding:10px 12px;font-weight:700;cursor:pointer}
 .primary{background:var(--aa);color:white} .secondary{background:#e7ebef;color:#111}
@@ -80,6 +82,7 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
       <div><label>Blade Style</label><select id="blade"></select></div>
       <div><label>Configuration</label><select id="config"></select></div>
     </div>
+    <div class="note" id="streetHint">Both street faces are shown open for approval. Inverted swaps the upper street; Offset moves the blades toward their ends.</div>
   </div>
   <div class="section">
     <h2>Sign Appearance</h2>
@@ -109,13 +112,14 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
     <label>Finial</label><select id="finial"></select>
     <label>Post</label><select id="post"></select>
     <label>Base</label><select id="base"></select>
+    <div class="note" id="systemHint" role="status"></div>
   </div>
   <div class="actions">
     <button class="primary" onclick="window.print()">Print / Save PDF</button>
     <button class="secondary" onclick="exportSVG()">Export SVG</button>
   </div>
   <div class="note">
-    v0.7 UI/component refinement: added a galvanized U-channel post vector based on the supplied front-view references; removed the Customer / Development field; moved Blade Style and Configuration into Street Names; and strengthened the main section headers. TCP Standard defaults remain the 2 3/8 Black Powder Post, Corinthian Base, and Dome Cap. Rouzan-style 4 in Square Post and SB46 Base are selectable placeholders until their dedicated vectors are built.
+    Select the assembly, review the street names, then print or export your proof. Component artwork is representative; confirm vendor fit before ordering.
   </div>
 </aside>
 <main class="previewWrap">
@@ -130,15 +134,12 @@ td:first-child{width:32%;color:var(--muted);font-weight:700}
       </div>
     </div>
     <div class="canvas">
-      <svg id="proof" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity=".18"/>
-          </filter>
-        </defs>
+      <svg id="proof" role="img" aria-label="Street name system concept proof" viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
+        <title>Street Name System — Concept Proof</title>
         <rect width="900" height="620" fill="#f4f6f8"/>
 
         <g id="assembly"></g>
+        <text x="450" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#68707b">Concept Proof — Not for fabrication</text>
       </svg>
     </div>
     <div class="summary">
@@ -279,7 +280,7 @@ function mountScale(asset, postPxW) {
   return (postPxW * COLLAR_RATIO) / asset.mateWidth;
 }
 
-const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"NONE","label":"None","style":"none"},{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"NONE","label":"None","style":"none","height":"0 in","family":"None"},{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
+const DATA = {"blades": [{"sku":"AA-9X30","label":"9 in Standard","size":"30","dims":"30 x 9","shape":"rectangle"}], "brackets": [{"sku":"NONE","label":"None","size":"30","style":"none"}, {"sku": "OB1227J", "label": "Dogwood — 30 in", "size": "30", "style": "dogwood"}, {"sku": "OB1227C", "label": "Dogwood — 36 in", "size": "36", "style": "dogwood"}, {"sku": "OB1228J", "label": "Scroll — 30 in", "size": "30", "style": "scroll"}, {"sku": "OB1228C", "label": "Scroll — 36 in", "size": "36", "style": "scroll"}], "finials": [{"sku":"NONE","label":"None","style":"none"},{"sku":"AA-PINEAPPLE-V1","label":"Pineapple Finial","style":"pineapple"},{"sku":"AA-BALL-V1","label":"Ball Finial","style":"ball"},{"sku":"AA-DOME-V1","label":"Dome Cap","style":"dome"},{"sku":"OPA9516MD","label":"Spear Finial (placeholder)","style":"spear"}], "posts": [{"sku":"TCP-238-BPP","label":"TCP Standard — 2 3/8 Black Powder Post — 12 ft","height":"12 ft","widthIn":2.375,"profile":"round238","family":"TCP Standard"}, {"sku":"TCP-238-BPP-13","label":"TCP Standard — 2 3/8 Black Powder Post — 13 ft","height":"13 ft","widthIn":2.375,"profile":"round238","family":"TCP Standard"}, {"sku":"ROUZAN-4SQ","label":"Rouzan Style — 4 in Square Post — 12 ft","height":"12 ft","widthIn":4,"profile":"square4","family":"Rouzan"}, {"sku":"AA-UCHANNEL-GALV","label":"Galvanized U-Channel Post — 12 ft","height":"12 ft","widthIn":2.5,"profile":"uchannel","family":"Standard Traffic"}], "bases": [{"sku":"NONE","label":"None","style":"none","heightIn":0,"height":"0 in","family":"None"},{"sku":"TCP-CORINTHIAN","label":"TCP Standard — Corinthian Base","style":"corinthian","heightIn":27,"height":"27 in","family":"TCP Standard"}, {"sku":"SB46","label":"Rouzan Style — SB46 Base (placeholder)","style":"sb46","heightIn":29,"height":"29 in","family":"Rouzan"}, {"sku":"OPR123BK8397","label":"8 1/4 in Welded Base","style":"short","heightIn":8.25,"height":"8 1/4 in","family":"Other"}], "configs": ["Standard", "Inverted", "Offset"]};
 const $ = id => document.getElementById(id);
 function fillSelect(id, items, labelFn) {
   const sel=$(id); sel.innerHTML="";
@@ -318,6 +319,9 @@ function bladePath(x,y,w,h,shape) {
   }
   return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/>`;
 }
+// Source artwork spans 96 units horizontally and 32 vertically, including stroke.
+// Its rail is at y=0. Fit that rail beneath the blade, on its projecting side.
+const BRACKET_GEOMETRY = { reach: 96, depth: 32, railHalfWidth: 4.5 };
 function bracketMarkup(style, x, y, dir=1) {
   if(style==="none") return "";
   const s=dir;
@@ -334,6 +338,51 @@ function bracketMarkup(style, x, y, dir=1) {
           fill="none" stroke="#111" stroke-width="5" stroke-linecap="round"/>
     <circle cx="${x+55*s}" cy="${y+20}" r="6" fill="none" stroke="#111" stroke-width="4"/>`;
 }
+function streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH, pxPerIn,
+                        config, bracketStyle, noStreet1, noStreet2 }) {
+  const active = [!noStreet1, !noStreet2];
+  const count = active.filter(Boolean).length;
+  // Spread view: both perpendicular faces are opened toward the viewer.
+  // Standard retains a six-inch inboard tail; Offset retains just the mounting seat.
+  const seat = postPxW / 2 + pxPerIn;
+  const tail = config === 'Offset' ? seat : Math.max(seat, 6 * pxPerIn);
+  const offset = count === 1 ? 0 : bladePxW / 2 - tail;
+  const first = count === 1 ? (active[0] ? 0 : 1) : config === 'Inverted' ? 1 : 0;
+  const stations = [0, 1].map(i => {
+    const dir = i === first ? -1 : 1;
+    const cx = postX + dir * offset;
+    const reach = bladePxW / 2 + offset - 3 * pxPerIn;
+    const bracketScale = bracketStyle === 'none' ? 0 : reach / BRACKET_GEOMETRY.reach;
+    return { index: i, active: active[i], cx, dir, bracketScale };
+  });
+  let top = postTopY + 3 * pxPerIn;
+  for (const i of [first, 1 - first]) {
+    const s = stations[i];
+    s.cy = top + bladePxH / 2;
+    s.railY = top + bladePxH + BRACKET_GEOMETRY.railHalfWidth * s.bracketScale;
+    s.bottom = s.railY + BRACKET_GEOMETRY.depth * s.bracketScale;
+    if (s.active) top = s.bottom + 1.5 * pxPerIn;
+  }
+  return stations;
+}
+function mountedBracket(style, station, postX, postPxW) {
+  if (!station.active || style === 'none') return '';
+  const { railY, dir, bracketScale: scale } = station;
+  const collarH = 2 * BRACKET_GEOMETRY.railHalfWidth * scale;
+  return `<g data-part="bracket" data-street="${station.index}">
+    <rect x="${postX-postPxW*COLLAR_RATIO/2}" y="${railY-collarH/2}"
+          width="${postPxW*COLLAR_RATIO}" height="${collarH}" fill="#111"/>
+    <g transform="translate(${postX} ${railY}) scale(${scale})">${bracketMarkup(style,0,0,dir)}</g>
+  </g>`;
+}
+function fitStreetLabels() {
+  document.querySelectorAll('[data-part="street-text"]').forEach(text => {
+    // Measure the actual font, separately for each name. Never enlarge short names.
+    const width = text.getComputedTextLength();
+    const available = +text.dataset.available;
+    if (width > available) text.setAttribute('font-size', +text.getAttribute('font-size') * available / width);
+  });
+}
 function updateStreetControls() {
   const no1 = $("noStreet1").checked;
   const no2 = $("noStreet2").checked;
@@ -341,6 +390,11 @@ function updateStreetControls() {
   $("street2").disabled = no2;
   $("street1").style.opacity = no1 ? ".45" : "1";
   $("street2").style.opacity = no2 ? ".45" : "1";
+  $("config").disabled = no1 || no2;
+  $("bracket").disabled = no1 && no2;
+  $("streetHint").textContent = no1 && no2 ? "No street-name blades are shown. Your names and configuration are retained."
+    : no1 || no2 ? "A single street is centered at the upper mounting station. Your two-street configuration is retained."
+    : "Both street faces are shown open for approval. Inverted swaps the upper street; Offset moves the blades toward their ends.";
 }
 // ---------------------------------------------------------------------------
 // A vertical post segment with independently controlled end radii.
@@ -401,6 +455,9 @@ function uChannelPostMarkup(x,y,h,w=22) {
 function reconcileSelections() {
   const blade   = DATA.blades[+$("blade").value];
   const bracket = DATA.brackets[+$("bracket").value];
+  Array.from($("bracket").options).forEach((o,i)=>{
+    o.disabled = DATA.brackets[i].style !== "none" && DATA.brackets[i].size !== blade.size;
+  });
   // A bracket must match the blade it carries.
   if(bracket.style!=="none" && bracket.size!==blade.size) {
     const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
@@ -420,6 +477,7 @@ function reconcileSelections() {
   const baseSel     = $("base");
   Array.from(baseSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==baseNoneIdx; });
   if(!decorOK && baseNoneIdx>=0) baseSel.value=String(baseNoneIdx);
+  $("systemHint").textContent = decorOK ? "" : "U-channel uses no decorative base or finial. Width is a representative 2½ in; confirm the supplied post specification.";
 }
 function render() {
   const blade=DATA.blades[+$("blade").value];
@@ -433,22 +491,20 @@ function render() {
   const noStreet2=$("noStreet2").checked;
   const s1=$("street1").value || "STREET NAME";
   const s2=$("street2").value || "";
-  updateStreetControls();
   // -------------------------
   // Dimension-driven geometry
   // -------------------------
   // Catalog post lengths: 12' / 13' = 144 / 156 in.
-  const postIn = post.height==="13 ft" ? 156 : 144;
-  const baseIn = base.style==="none" ? 0 : (base.style==="short" ? 8.25 : (base.style==="sb46" ? 29 : 27));
-  const bladeWIn = blade.size==="36" ? 36 : 30;
+  const baseIn = base.heightIn;
   // Blade heights from catalog dimensions.
   const dims = blade.dims.split("x").map(x=>parseFloat(x.trim()));
+  const bladeWIn = dims[0];
   const bladeHIn = dims[1];
   // v0.2: one uniform local scale for visible hardware; full post height is shown with a break.
   const pxPerIn = 5.0;
   const groundY = 552;
   const postX = 450;
-  const postPxW = post.profile==="square4" ? 4*pxPerIn : (post.profile==="uchannel" ? 22 : 2.375*pxPerIn);
+  const postPxW = post.widthIn * pxPerIn;
   const basePxH = baseIn*pxPerIn;
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
@@ -463,40 +519,22 @@ function render() {
   // ---------------------------------------------------------------------------
   const EXPOSED_RUN     = 40;   // px of post that must show above the base
   const MIN_COMPRESSION = 40;   // px — the zone may never collapse below this
+  const MAX_COMPRESSION = 60;   // keep a bare post from looking like two disconnected stubs
   const topSectionBottomY = 330;
   const baseTopY = groundY-basePxH;
   const lowerSectionTopY = Math.max(topSectionBottomY + MIN_COMPRESSION,
-                                    baseTopY - EXPOSED_RUN);
-  // CPC catalog imagery places the blades near the very top of the post,
-  // immediately below the finial. We use a small real-world clearance.
-  const finialBottomY = postTopY + 8;
-  const topBladeCenterY = finialBottomY + (1.5*pxPerIn) + bladePxH/2;
-  const secondBladeCenterY = topBladeCenterY + bladePxH + (1.5*pxPerIn);
-  // Readable 2D convention: both are true 9x30 blades, offset around the post rather than stacked.
-  let b1cx = postX - bladePxW*0.32, b2cx = postX + bladePxW*0.32;
-  let b1cy = topBladeCenterY, b2cy = secondBladeCenterY;
-  if(config==="Inverted") {
-    [b1cy,b2cy] = [b2cy,b1cy];
-    [b1cx,b2cx] = [postX + bladePxW*0.32, postX - bladePxW*0.32];
-  }
-  if(config==="Offset") {
-    b1cx = postX - bladePxW*0.38;
-    b2cx = postX + bladePxW*0.38;
-  }
+    Math.min(topSectionBottomY + MAX_COMPRESSION, baseTopY - EXPOSED_RUN));
+  const stations = streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH,
+    pxPerIn, config, bracketStyle: bracket.style, noStreet1, noStreet2 });
+  const [primary, cross] = stations;
+  const b1cx=primary.cx, b1cy=primary.cy, b2cx=cross.cx, b2cy=cross.cy;
   const x1=b1cx-bladePxW/2, y1=b1cy-bladePxH/2;
   const x2=b2cx-bladePxW/2, y2=b2cy-bladePxH/2;
   const blade1 = bladePath(x1,y1,bladePxW,bladePxH,blade.shape);
   const blade2 = bladePath(x2,y2,bladePxW,bladePxH,blade.shape);
   const textSize = 5.2*pxPerIn;
-  // Bracket anchor positions are tied to the blade centerlines.
-  let bracket1="", bracket2="";
-  if(config==="Offset") {
-    bracket1 = noStreet1 ? "" : bracketMarkup(bracket.style,postX,b1cy,-1);
-    bracket2 = noStreet2 ? "" : bracketMarkup(bracket.style,postX,b2cy,1);
-  } else {
-    bracket1 = noStreet1 ? "" : bracketMarkup(bracket.style,postX,b1cy,1);
-    bracket2 = noStreet2 ? "" : bracketMarkup(bracket.style,postX,b2cy,-1);
-  }
+  const bracket1 = mountedBracket(bracket.style,primary,postX,postPxW);
+  const bracket2 = mountedBracket(bracket.style,cross,postX,postPxW);
   // Scale the tall/short base to catalog-relative height.
   let baseSvg;
   if(base.style==="none") {
@@ -519,6 +557,9 @@ function render() {
   } else {
     // TCP Corinthian base — refined 27 in decorative sleeve.
     // Narrower, layered silhouette based on the catalog + installed field references.
+    // The narrowest neck must still enclose the host. Preserve the ornament's
+    // outer widths and catalog height; widen only its throat where needed.
+    const neck = halfWidth => Math.max(halfWidth, postPxW * COLLAR_RATIO / 2);
     baseSvg = `
       <g aria-label="TCP Corinthian Base">
         <!-- top cap and collar -->
@@ -528,27 +569,27 @@ function render() {
         <ellipse cx="${postX}" cy="${baseTopY+15}" rx="22" ry="5" fill="#111"/>
         <path d="M ${postX-16} ${baseTopY+17}
                  Q ${postX-20} ${baseTopY+23} ${postX-14} ${baseTopY+30}
-                 L ${postX-11} ${baseTopY+37} H ${postX+11}
+                 L ${postX-neck(11)} ${baseTopY+37} H ${postX+neck(11)}
                  L ${postX+14} ${baseTopY+30}
                  Q ${postX+20} ${baseTopY+23} ${postX+16} ${baseTopY+17} Z" fill="#111"/>
         <!-- long fluted shaft -->
-        <path d="M ${postX-11} ${baseTopY+35} H ${postX+11}
-                 L ${postX+10} ${groundY-57} H ${postX-10} Z" fill="#111"/>
+        <path d="M ${postX-neck(11)} ${baseTopY+35} H ${postX+neck(11)}
+                 L ${postX+neck(10)} ${groundY-57} H ${postX-neck(10)} Z" fill="#111"/>
         <path d="M ${postX-6} ${baseTopY+39} L ${postX-5} ${groundY-61}
                  M ${postX} ${baseTopY+38} L ${postX} ${groundY-60}
                  M ${postX+6} ${baseTopY+39} L ${postX+5} ${groundY-61}"
               fill="none" stroke="#4b4b4b" stroke-width="1.5" opacity=".8"/>
         <!-- Corinthian lower ornament -->
-        <path d="M ${postX-10} ${groundY-60}
+        <path d="M ${postX-neck(10)} ${groundY-60}
                  Q ${postX-18} ${groundY-55} ${postX-17} ${groundY-49}
-                 Q ${postX-15} ${groundY-44} ${postX-9} ${groundY-41}
+                 Q ${postX-15} ${groundY-44} ${postX-neck(9)} ${groundY-41}
                  Q ${postX-18} ${groundY-36} ${postX-17} ${groundY-30}
-                 Q ${postX-14} ${groundY-24} ${postX-8} ${groundY-21}
-                 H ${postX+8}
+                 Q ${postX-14} ${groundY-24} ${postX-neck(8)} ${groundY-21}
+                 H ${postX+neck(8)}
                  Q ${postX+14} ${groundY-24} ${postX+17} ${groundY-30}
-                 Q ${postX+18} ${groundY-36} ${postX+9} ${groundY-41}
+                 Q ${postX+18} ${groundY-36} ${postX+neck(9)} ${groundY-41}
                  Q ${postX+15} ${groundY-44} ${postX+17} ${groundY-49}
-                 Q ${postX+18} ${groundY-55} ${postX+10} ${groundY-60} Z" fill="#111"/>
+                 Q ${postX+18} ${groundY-55} ${postX+neck(10)} ${groundY-60} Z" fill="#111"/>
         <path d="M ${postX} ${groundY-57}
                  Q ${postX-7} ${groundY-50} ${postX-12} ${groundY-48}
                  Q ${postX-5} ${groundY-44} ${postX} ${groundY-39}
@@ -561,7 +602,10 @@ function render() {
         <path d="M ${postX-23} ${groundY-19} H ${postX+23} L ${postX+27} ${groundY-12} H ${postX-27} Z" fill="#111"/>
         <ellipse cx="${postX}" cy="${groundY-10}" rx="30" ry="5" fill="#111"/>
         <path d="M ${postX-31} ${groundY-9} H ${postX+31} L ${postX+35} ${groundY-3} H ${postX-35} Z" fill="#111"/>
-        <ellipse cx="${postX}" cy="${groundY-4}" rx="36" ry="4" fill="#0b0b0b"/>
+        <path d="M ${postX-36} ${groundY-4}
+                 C ${postX-36} ${groundY-9} ${postX+36} ${groundY-9} ${postX+36} ${groundY-4}
+                 V ${groundY-2} Q ${postX+36} ${groundY} ${postX+32} ${groundY}
+                 H ${postX-32} Q ${postX-36} ${groundY} ${postX-36} ${groundY-2} Z" fill="#0b0b0b"/>
         <!-- restrained highlights to keep black detail readable in proofs -->
         <path d="M ${postX-15} ${baseTopY+14} H ${postX+15}
                  M ${postX-11} ${baseTopY+35} H ${postX+11}
@@ -597,38 +641,46 @@ function render() {
     <g data-part="post-lower">${lowerPostSvg}</g>
     <g data-part="post-upper">${upperPostSvg}</g>
     <g data-part="break">
-      <path d="M${postX-18} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+      <path d="M${postX-24} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
             fill="none" stroke="#6b7280" stroke-width="2"/>
-      <path d="M${postX-18} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
+      <path d="M${postX-24} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
             fill="none" stroke="#6b7280" stroke-width="2"/>
     </g>
     <g data-part="base">${baseSvg}</g>
     <g data-part="finial">${finialSvg}</g>
     ${bracket1} ${bracket2}
-    <g fill="${face}" stroke="#111" stroke-width="2.5">${noStreet1 ? "" : blade1}${noStreet2 ? "" : blade2}</g>
+    <g fill="${face}" stroke="#111" stroke-width="2.5">
+      ${noStreet1 ? "" : `<g data-part="blade" data-street="0">${blade1}</g>`}
+      ${noStreet2 ? "" : `<g data-part="blade" data-street="1">${blade2}</g>`}
+    </g>
     <g fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="2">
       ${noStreet1 ? "" : `<line x1="${x1+2}" y1="${y1+4}" x2="${x1+bladePxW-2}" y2="${y1+4}"/>
       <line x1="${x1+2}" y1="${y1+bladePxH-4}" x2="${x1+bladePxW-2}" y2="${y1+bladePxH-4}"/>`}
       ${noStreet2 ? "" : `<line x1="${x2+2}" y1="${y2+4}" x2="${x2+bladePxW-2}" y2="${y2+4}"/>
       <line x1="${x2+2}" y1="${y2+bladePxH-4}" x2="${x2+bladePxW-2}" y2="${y2+bladePxH-4}"/>`}
     </g>
-    ${noStreet1 ? "" : `<text x="${b1cx}" y="${b1cy+textSize/3}" text-anchor="middle"
+    ${noStreet1 ? "" : `<text data-part="street-text" data-street="0" data-available="${bladePxW-16}" x="${b1cx}" y="${b1cy}" dominant-baseline="central" text-anchor="middle"
           font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s1)}</text>`}
-    ${noStreet2 ? "" : `<text x="${b2cx}" y="${b2cy+textSize/3}" text-anchor="middle"
+    ${noStreet2 ? "" : `<text data-part="street-text" data-street="1" data-available="${bladePxW-16}" x="${b2cx}" y="${b2cy}" dominant-baseline="central" text-anchor="middle"
           font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s2)}</text>`}
     <text x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
           font-family="Arial,sans-serif" font-size="14" fill="#68707b">${post.height} post, shown broken</text>
   `
+  fitStreetLabels();
   $("proofTitle").textContent=$("job").value || "Street Name System";
+  $("proof").querySelector('title').textContent = $("proofTitle").textContent + ' — Concept Proof';
+  $("proof").setAttribute('aria-label', $("proofTitle").textContent + ' — Concept Proof');
   $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : `${blade.label} — ${blade.dims}`;
-  $("sumBracket").textContent=`${bracket.sku} — ${bracket.label}`;
+  $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : `${bracket.sku} — ${bracket.label}`;
   $("sumPost").textContent=`${post.sku} — ${post.label}`;
-  $("sumFinial").textContent=`${finial.sku} — ${finial.label}`;
-  $("sumBase").textContent=`${base.sku} — ${base.label}`;
-  $("sumConfig").textContent=config;
+  $("sumFinial").textContent=`${finial.sku} — ${finial.label}` + (finialAsset ? " · Representative socket-scaled artwork; confirm vendor fit." : "");
+  $("sumBase").textContent=`${base.sku} — ${base.label}` + (base.style === 'corinthian' && postPxW * COLLAR_RATIO > 16
+    ? " · Representative throat widened to clear post; confirm vendor fit." : "");
+  $("sumConfig").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : (noStreet1 || noStreet2) ? "Single street — centered" : `${config} · Both street faces shown in spread view`;
 
   // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
   window.__proofDebug = {
+    stations,
     collarRatio: COLLAR_RATIO,
     post:   post.sku,
     finial: finial.sku,
@@ -653,7 +705,13 @@ function render() {
     mateWidthPx: finialAsset ? finialAsset.mateWidth * finialScale : null,
   };
 }
-function update() { reconcileSelections(); render(); }
+function update() { reconcileSelections(); updateStreetControls(); render(); }
+
+// Associate existing visible labels without changing the established form layout.
+document.querySelectorAll('label').forEach(label => {
+  const control = label.nextElementSibling;
+  if (control && control.matches('input,select')) label.htmlFor = control.id;
+});
 document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",update));
 update();
 async function updateBuildInfo() {

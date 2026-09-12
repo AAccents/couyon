@@ -1,6 +1,6 @@
 # Couyon — Rendering Architecture
 
-**Status:** agreed model, partially implemented.
+**Status:** implemented mounting and spread-view model; catalog compatibility remains incomplete.
 **Applies to:** `index.html` (AA Proof Generator), prototype v0.7 and forward.
 **Audience:** anyone (human or AI) modifying the renderer. Read this before changing
 how components are positioned, scaled, or drawn.
@@ -81,7 +81,7 @@ Dimensions that are **literal** (real inches × `pxPerIn`):
 
 | Quantity | Source |
 |---|---|
-| Post width | `nominalDiameter × pxPerIn` |
+| Post width | `widthIn × pxPerIn` |
 | Base height | catalog height × `pxPerIn` |
 | Blade width and height | catalog dims × `pxPerIn` |
 
@@ -100,7 +100,7 @@ Dimensions that are **deliberately non-literal**:
 | `postTopY` | 110 (fixed) | Top of post / finial mating plane |
 | `topSectionBottomY` | 330 (fixed) | Bottom edge of upper post segment (break starts) |
 | `baseTopY` | **derived** — `groundY − heightIn × pxPerIn` | Base mating plane (its top face) |
-| `lowerSectionTopY` | **derived** — `max(topSectionBottomY + MIN_COMPRESSION, baseTopY − EXPOSED_RUN)` | Top edge of lower post segment (break ends) |
+| `lowerSectionTopY` | **derived** — `max(topSectionBottomY + MIN_COMPRESSION, min(topSectionBottomY + MAX_COMPRESSION, baseTopY − EXPOSED_RUN))` | Top edge of lower post segment (break ends) |
 | `groundY` | 552 (fixed) | Grade line |
 
 The region between `topSectionBottomY` and `lowerSectionTopY` is the **compression zone**.
@@ -114,6 +114,9 @@ with it — inside any base taller than about 19 in. Treating both boundaries as
 constants is what licensed that bug; do not go back to it.
 
 `MIN_COMPRESSION` clamps the zone so an unusually tall future base cannot collapse it.
+`MAX_COMPRESSION = 60` limits the visual gap. Short bases and Base = None therefore
+show a longer lower post instead of two disconnected stubs. `EXPOSED_RUN` is a minimum
+target, subject to the tall-base clamp, rather than a fixed visible length.
 `Base = None` needs no special case: `baseTopY == groundY`, and the same expression gives
 the right answer.
 
@@ -144,7 +147,7 @@ The correct model is **host + attachments**:
 ```
 
 The post exposes a **mounting axis** (a vertical line at `postX`) and an **interface**
-(`nominalDiameter`, `profile`). Any component mounts at a *station* — a y position along
+(`widthIn`, `profile`). Any component mounts at a *station* — a y position along
 that axis — with an orientation. Nothing is chained to anything else.
 
 Adding a mid-post plaque, a second cross-blade, or a street-number panel later requires
@@ -232,7 +235,7 @@ The rule produces sensible hardware across the library without any per-asset tun
 
 ## 7. Occlusion and overlap
 
-**Implemented for the finial joint. Still outstanding at the base joint.**
+**Implemented for both finial and base joints.**
 
 The root cause of the "stacked objects" look was not a missing overlap but the post's
 own end geometry: every segment was drawn as a rect with `rx = width/2`, which domes
@@ -315,7 +318,7 @@ Deliberately minimal. Every field below is **per-component**. See §10.
 ```js
 {
   profile:         "round238",  // round238 | square4 | uchannel
-  nominalDiameter: 2.375,       // inches — the mounting interface
+  widthIn:         2.375,       // inches — diameter or profile width
 }
 ```
 
@@ -323,7 +326,7 @@ Nothing else. If a field can be *computed* from these, it is not stored.
 
 ### Base
 
-**No new metadata.** A base needs nothing beyond the height already in the catalog: its
+`heightIn` stores the numeric catalog height separately from the display label. Its
 mating plane is `groundY − heightIn × pxPerIn`, and the occlusion convention in section 7
 does the rest. Do not add a `throatDepth` or an embed field by analogy with `embedDepth` —
 the finial needed one because the post enters it from below and stops; the post simply
@@ -331,23 +334,32 @@ passes behind a base and keeps going.
 
 ---
 
-## 9. Open question — projection convention
+## 9. Projection and street attachments
 
-**Unresolved. Flagged for a deliberate decision.**
+The proof uses a **declared spread view**: both perpendicular street faces are opened
+toward the viewer for name approval. This preserves the existing product convention;
+it is not an orthographic elevation. The control hint and configuration summary say so.
 
-A real installation has blades at 90° to each other. The proof currently draws both
-face-on, offset horizontally by `bladePxW × 0.32` (or `0.38` in Offset config). That
-constant is a fudge, and it is the kind that multiplies.
+`streetLayout()` receives host dimensions and selections, never SKUs. It returns the
+active stations, blade centers, bracket directions, rail elevations and bracket scales.
 
-This is a **convention**, and it is currently undeclared. Two coherent options:
+- Standard: primary above/left, cross below/right; a six-inch inboard tail, or the
+  minimum mounting seat if larger, keeps each blade spanning the entire post.
+- Inverted: cross above/left, primary below/right.
+- Offset: reduce the inboard tail to half the post width plus one inch.
+- One street: center it on the post at the upper station, regardless of its identity
+  or the retained two-street configuration. Neither street: no blades or brackets.
 
-1. **True orthographic elevation** — one blade face-on, the cross blade drawn edge-on as a
-   thin bar. Dimensionally honest; harder to read street names from.
-2. **Declared spread convention** — both blades face-on, artificially separated by a
-   documented rule. Readable; explicitly not an elevation.
+The first face starts three inches below the post mating plane. Brackets are scaled
+uniformly from their shared artwork envelope (96 units reach, 32 depth, 4.5 rail
+half-width), with three inches of inset from the projecting blade end. Their top rail
+touches the blade underside; a post-width collar covers the attachment. The next
+face starts below the complete bracket envelope plus 1.5 inches of clearance.
+With no bracket, the face-to-face gap is 1.5 inches.
 
-Anchors and mount stations will not resolve this. It needs a product decision, and it is
-probably a larger contributor to "the blades look wrong" than any joint geometry.
+Lettering is measured in the browser's actual font and reduced independently to fit
+each blade, with eight units of horizontal inset. No external font is required. Very
+long names still become small; vendor lettering limits are not yet modeled.
 
 ---
 
@@ -386,15 +398,16 @@ These are different questions and are stored differently.
 | **Render-fit** | Can we draw this plausibly? | Always yes. Universal. |
 | **Compatibility** | Can this actually be ordered together? | Computed, not stored. |
 
-Compatibility is **derived from one number**, not from parallel arrays:
+The original proposal derived compatibility from one number:
 
 ```js
-compatible = (asset.drawnForPostDia === post.nominalDiameter)
+sameNominalSize = (asset.drawnForPostDia === post.widthIn)
 ```
 
-Explicitly rejected: `actualFits: [...]` / `renderableOn: [...]` lists. They are parallel
-data that rots, and they impose real entry burden across a catalog that is not finished.
-A single `drawnForPostDia` per asset yields the same capability with zero maintenance.
+This is not implemented and is not sufficient evidence of compatibility: profile and
+vendor socket specifications also matter. Do not infer ordering fit from a scaled
+image. Avoid speculative parallel `actualFits` / `renderableOn` lists until the catalog
+has verified interface data.
 
 ### Enforced incompatibility
 
@@ -480,16 +493,16 @@ library grows — it would have surfaced the 1.99× dome cap immediately.
 | 3 | Socket-driven finial scaling | **done** |
 | 4 | Contact sheet (`test.html`) | **done** |
 | 5 | Inch-space asset authoring + `drawnForPostDia` | not started |
-| 6 | Mount stations / host+attachments generalization | not started |
+| 6 | Mount stations for blades and brackets | **done**, limited to current catalog |
 | 7a | Occlusion at the finial joint (`embedDepth`, flat ends) | **done** |
 | 7b | Occlusion at the base joint (draw order, derived break, grade) | **done** |
 | 7c | Drawn collars / ferrules for coloured finishes | not started |
 | 9 | Mounting invariant in the contact sheet | **done** |
 | 10 | U-channel incompatibility (decorative finials and bases) | **done** |
-| 8 | Projection convention decision | **undecided** — §9 |
+| 8 | Projection convention decision | **declared spread view** — §9 |
 
-Steps 5–7 are deliberately deferred until the step 1–4 rendering change has been visually
-validated.
+Inch-space conversion and finish-specific artwork remain deferred; existing vectors
+are retained. Blade/bracket stations and base/finial joins have been visually validated.
 
 **Design step 6 against brackets and blades, not against the finial/post/base stack.** The
 vertical stack is the easy case and is a trivial special case of a general mount. A model
@@ -497,25 +510,43 @@ that only solves the stack will need redoing.
 
 ---
 
-## 14. Known issues not yet addressed
+## 14. Current limitations and resolved silhouette defects
 
-- **The Corinthian base does not cover a 4 in square post at grade.** Caught by the base
-  invariant, which fails COVERED on that one combination: the base's foot ellipse tapers
-  narrower than the post near grade (deficit up to 3.9 px), so the post's corners sit
-  outside the base's foot. This is the base-width issue below, not a joint defect, and it
-  is deliberately left failing rather than papered over by loosening the tolerance — a test
-  that goes green by relaxing when it finds what it was built to find is worthless.
-- **U-channel width is a raw pixel constant.** `postPxW = 22` for `uchannel`, not derived
-  from a nominal dimension — implying ≈ 4.4 in, where real u-channel is ≈ 2.5 in. Give it a
-  `nominalDiameter` like every other post.
-- **Sub-pixel edges.** At `pxPerIn = 5`, a 2⅜″ post is 11.875 px centred on 450, so its
-  edges land on `.0625` boundaries and antialias. Raising the internal working scale
-  (e.g. `pxPerIn = 20` with a proportionally larger viewBox) removes a class of visual
-  noise at no cost.
-- **Base geometry is not interface-driven.** Bases are drawn procedurally with hardcoded
-  half-widths (`postX ± 19`, `± 22`) that do not reference `nominalDiameter`; measured
-  bounding widths are 72 / 86 / 68 px regardless of the post. Same treatment as §6 is owed
-  to them, and it is what the COVERED failure above is really pointing at.
+The Corinthian foot now has a flat bearing edge instead of tapering to a point at grade.
+Its narrow throat uses `max(artworkHalfWidth, postPxW × COLLAR_RATIO / 2)`. This keeps
+the original ornament, outer width and catalog height while providing post clearance.
+The square-post accommodation is disclosed in the base summary; it does not establish
+vendor compatibility. All base-joint pixel tests pass without relaxed tolerances.
+
+Post catalog entries now carry `widthIn` (profile-neutral because square and channel
+posts do not have a diameter): 2.375, 4, and a **representative** 2.5 for U-channel.
+The channel width needs vendor confirmation and is identified as representative in
+the UI. Finial artwork normalization is also disclosed in the summary.
+
+Still outstanding:
+
+- Verified vendor sockets, nominal base widths and ordering compatibility. Diameter
+  alone cannot prove that a round socket fits a square profile; section 11's proposed
+  equality test is insufficient for ordering. No new compatibility claims are made.
+- SB46, square-post details and spear remain approximate assets.
+- Additional blade sizes and real bracket dimensions need catalog evidence. The
+  bracket geometry is representative artwork, not fabrication geometry.
+- Unusually tall future bases or larger blades need a fit policy before catalog entry;
+  the current 330-unit upper break datum is validated for the existing catalog only.
+
+## 14a. Complete-assembly regression coverage
+
+The contact sheet also exercises 144 cases: four posts × three configurations × three
+bracket styles × four street-presence states. It measures rendered bounds for blade/post
+overlap, lettering containment, bracket rail contact and reach, street order, separation,
+canvas bounds, break length and base paint order. Twelve representative assemblies are
+shown; every failure is shown. `window.__testResults` exposes a machine-readable result.
+
+The optional `tests/validate.cjs` runner uses Playwright with installed Chrome, serves
+the two HTML files on loopback, checks the sheet, and saves screenshots and an exported
+SVG/PDF outside the repository. It also tests long/escaped names, selection transitions,
+mobile overflow, print controls and SVG parsing. Four deliberate regressions (misplaced
+bracket, overflowing text, missing blade, reversed base paint order) must be rejected.
 
 ---
 
