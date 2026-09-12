@@ -155,7 +155,7 @@ td{overflow-wrap:anywhere}
         <text x="450" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#68707b">Concept Proof — Not for fabrication</text>
       </svg>
     </div>
-    <div class="summary">
+    <div class="summary screenOnly" aria-label="Internal component details">
       <table>
         <tr><td>Blade</td><td id="sumBlade"></td></tr>
         <tr><td>Bracket</td><td id="sumBracket"></td></tr>
@@ -309,8 +309,9 @@ const SOURCES = {
 const DATA = {
   "blades": [
     {
-      "sku": "AA-9X30",
-      "label": "9 in Standard",
+      "id": "AA-BLADE-RECT-9X30",
+      "vendor": [],
+      "customer": { "name": "9 in Street-Name Blade" },
       "size": "30",
       "shape": "rectangle",
       "identity": {
@@ -348,13 +349,15 @@ const DATA = {
   ],
   "brackets": [
     {
-      "sku": "NONE",
-      "label": "None",
+      "id": "AA-BRACKET-NONE",
+      "vendor": [],
+      "customer": { "name": "No Bracket" },
       "style": "none"
     },
     {
-      "sku": "OB1227J",
-      "label": "Dogwood — for 30 in blade",
+      "id": "AA-BRACKET-DOGWOOD-30",
+      "vendor": [{ "name": "CPC", "sku": "OB1227J", "preferred": true }],
+      "customer": { "name": "Dogwood Bracket — 30 in Blade" },
       "size": "30",
       "style": "dogwood",
       "identity": {
@@ -375,8 +378,9 @@ const DATA = {
       }
     },
     {
-      "sku": "OB1227C",
-      "label": "Dogwood — for 36 in blade",
+      "id": "AA-BRACKET-DOGWOOD-36",
+      "vendor": [{ "name": "CPC", "sku": "OB1227C", "preferred": true }],
+      "customer": { "name": "Dogwood Bracket — 36 in Blade" },
       "size": "36",
       "style": "dogwood",
       "identity": {
@@ -397,8 +401,9 @@ const DATA = {
       }
     },
     {
-      "sku": "OB1228J",
-      "label": "Scroll — for 30 in blade",
+      "id": "AA-BRACKET-SCROLL-30",
+      "vendor": [{ "name": "CPC", "sku": "OB1228J", "preferred": true }],
+      "customer": { "name": "Scroll Bracket — 30 in Blade" },
       "size": "30",
       "style": "scroll",
       "identity": {
@@ -419,8 +424,9 @@ const DATA = {
       }
     },
     {
-      "sku": "OB1228C",
-      "label": "Scroll — for 36 in blade",
+      "id": "AA-BRACKET-SCROLL-36",
+      "vendor": [{ "name": "CPC", "sku": "OB1228C", "preferred": true }],
+      "customer": { "name": "Scroll Bracket — 36 in Blade" },
       "size": "36",
       "style": "scroll",
       "identity": {
@@ -443,13 +449,15 @@ const DATA = {
   ],
   "finials": [
     {
-      "sku": "NONE",
-      "label": "None",
+      "id": "AA-FINIAL-NONE",
+      "vendor": [],
+      "customer": { "name": "No Finial" },
       "style": "none"
     },
     {
-      "sku": "AA-PINEAPPLE-V1",
-      "label": "Pineapple Finial",
+      "id": "AA-FINIAL-PINEAPPLE-V1",
+      "vendor": [],
+      "customer": { "name": "Pineapple Finial" },
       "style": "pineapple",
       "identity": {
         "confidence": "reference-derived",
@@ -469,8 +477,9 @@ const DATA = {
       }
     },
     {
-      "sku": "AA-BALL-V1",
-      "label": "Ball Finial",
+      "id": "AA-FINIAL-BALL-V1",
+      "vendor": [],
+      "customer": { "name": "Ball Finial" },
       "style": "ball",
       "identity": {
         "confidence": "reference-derived",
@@ -490,8 +499,9 @@ const DATA = {
       }
     },
     {
-      "sku": "AA-DOME-V1",
-      "label": "Dome Cap",
+      "id": "AA-FINIAL-DOME-V1",
+      "vendor": [],
+      "customer": { "name": "Dome Cap" },
       "style": "dome",
       "identity": {
         "confidence": "reference-derived",
@@ -511,8 +521,9 @@ const DATA = {
       }
     },
     {
-      "sku": "OPA9516MD",
-      "label": "Spear Finial (placeholder)",
+      "id": "AA-FINIAL-SPEAR-V1",
+      "vendor": [{ "name": "CPC", "sku": "OPA9516MD", "preferred": true }],
+      "customer": { "name": "Spear Finial" },
       "style": "spear",
       "identity": {
         "confidence": "vendor-supported",
@@ -534,8 +545,9 @@ const DATA = {
   ],
   "posts": [
     {
-      "sku": "TCP-238-BPP",
-      "label": "TCP Standard — 2 3/8 Black Powder Post — 12 ft",
+      "id": "AA-POST-ROUND-238-12",
+      "vendor": [{ "name": "TCP", "sku": "TCP-238-BPP", "preferred": true }],
+      "customer": { "name": "2 3/8 in Round Post — 12 ft" },
       "height": "12 ft",
       "profile": "round238",
       "family": "TCP Standard",
@@ -566,8 +578,9 @@ const DATA = {
       }
     },
     {
-      "sku": "TCP-238-BPP-13",
-      "label": "TCP Standard — 2 3/8 Black Powder Post — 13 ft",
+      "id": "AA-POST-ROUND-238-13",
+      "vendor": [{ "name": "TCP", "sku": "TCP-238-BPP-13", "preferred": true }],
+      "customer": { "name": "2 3/8 in Round Post — 13 ft" },
       "height": "13 ft",
       "profile": "round238",
       "family": "TCP Standard",
@@ -598,8 +611,9 @@ const DATA = {
       }
     },
     {
-      "sku": "ROUZAN-4SQ",
-      "label": "Rouzan Style — 4 in Square Post — 12 ft",
+      "id": "AA-POST-SQUARE-4-12",
+      "vendor": [{ "name": "Rouzan", "sku": "ROUZAN-4SQ", "preferred": true }],
+      "customer": { "name": "4 in Square Post — 12 ft" },
       "height": "12 ft",
       "profile": "square4",
       "family": "Rouzan",
@@ -630,8 +644,9 @@ const DATA = {
       }
     },
     {
-      "sku": "AA-UCHANNEL-GALV",
-      "label": "Galvanized U-Channel Post — 12 ft",
+      "id": "AA-POST-UCHANNEL-12",
+      "vendor": [],
+      "customer": { "name": "Galvanized U-Channel Post — 12 ft" },
       "height": "12 ft",
       "profile": "uchannel",
       "family": "Standard Traffic",
@@ -659,14 +674,16 @@ const DATA = {
   ],
   "bases": [
     {
-      "sku": "NONE",
-      "label": "None",
+      "id": "AA-BASE-NONE",
+      "vendor": [],
+      "customer": { "name": "No Base" },
       "style": "none",
       "family": "None"
     },
     {
-      "sku": "TCP-CORINTHIAN",
-      "label": "TCP Standard — Corinthian Base",
+      "id": "AA-BASE-CORINTHIAN",
+      "vendor": [{ "name": "TCP", "sku": "TCP-CORINTHIAN", "preferred": true }],
+      "customer": { "name": "Corinthian Base" },
       "style": "corinthian",
       "family": "TCP Standard",
       "identity": {
@@ -690,8 +707,9 @@ const DATA = {
       }
     },
     {
-      "sku": "SB46",
-      "label": "Rouzan Style — SB46 Base (placeholder)",
+      "id": "AA-BASE-SQUARE-DECORATIVE",
+      "vendor": [{ "name": "Ornamental", "sku": "SB46", "preferred": true }],
+      "customer": { "name": "Decorative Square-Post Base" },
       "style": "sb46",
       "family": "Rouzan",
       "identity": {
@@ -718,8 +736,9 @@ const DATA = {
       }
     },
     {
-      "sku": "OPR123BK8397",
-      "label": "8 1/4 in Welded Base (assembly reference)",
+      "id": "AA-BASE-WELDED-825",
+      "vendor": [{ "name": "CPC", "sku": "OPR123BK8397", "preferred": true }],
+      "customer": { "name": "8 1/4 in Welded Base" },
       "style": "short",
       "family": "Other",
       "identity": {
@@ -763,8 +782,17 @@ function proofDimension(component, name) {
   const fallback = component.presentation?.[name];
   return Number.isFinite(fallback) && fallback > 0 ? fallback : null;
 }
-function componentSummary(component) {
-  if (component.style === 'none') return 'None';
+function customerSummary(customer) {
+  return customer?.name || 'Component';
+}
+function preferredVendor(component) {
+  return (component.vendor || []).find(v=>v.preferred) || (component.vendor || [])[0] || null;
+}
+function internalOptionLabel(component) {
+  const vendor = preferredVendor(component);
+  return `${customerSummary(component.customer)}${vendor ? ` — ${vendor.name} ${vendor.sku}` : ''}`;
+}
+function internalSummary(component) {
   const artwork = component.artwork || { confidence:'unknown', note:'Artwork requires verification.' };
   const labels = { widthIn:'width', heightIn:'height', reachIn:'reach', lengthFt:'length' };
   const facts = Object.entries(component.dimensions || {}).filter(([name]) => physicalValue(component,name) !== null)
@@ -775,14 +803,15 @@ function componentSummary(component) {
     ? `identity ${component.identity.confidence}` : '';
   const fit = component.fit ? (component.fit.confidence === 'vendor-supported' ? 'stated fit vendor-supported' : 'fit unverified') : '';
   const artworkDisclosure = `${artwork.confidence} artwork${artwork.note ? ` (${artwork.note})` : ''}`;
-  return `${component.sku} — ${component.label} · ${[identity,...facts,...fallbacks,artworkDisclosure,fit].filter(Boolean).join('; ')}.`;
+  const vendors = (component.vendor || []).map(v=>`${v.name} ${v.sku}${v.preferred ? ' (preferred)' : ''}`).join(', ');
+  return `${component.id} — ${customerSummary(component.customer)} · ${[vendors && `vendor ${vendors}`,component.family && `family ${component.family}`,identity,...facts,...fallbacks,artworkDisclosure,fit].filter(Boolean).join('; ')}.`;
 }
 const $ = id => document.getElementById(id);
-function fillSelect(id, items, labelFn) {
+function fillSelect(id, items, labelFn=internalOptionLabel, valueFn=x=>x.id) {
   const sel=$(id); sel.innerHTML="";
   items.forEach((x,i)=>{
     const o=document.createElement("option");
-    o.value=i; o.textContent=labelFn?labelFn(x):x.label;
+    o.value=valueFn(x,i); o.textContent=labelFn(x);
     sel.appendChild(o);
   });
 }
@@ -791,13 +820,17 @@ fillSelect("bracket",DATA.brackets);
 fillSelect("finial",DATA.finials);
 fillSelect("post",DATA.posts);
 fillSelect("base",DATA.bases);
-fillSelect("config",DATA.configs,x=>x);
-$("blade").value="0";
-$("bracket").value="0";
-$("finial").value="3";
-$("post").value="0";
-$("base").value="1";
+fillSelect("config",DATA.configs,x=>x,(_,i)=>String(i));
+$("blade").value="AA-BLADE-RECT-9X30";
+$("bracket").value="AA-BRACKET-NONE";
+$("finial").value="AA-FINIAL-DOME-V1";
+$("post").value="AA-POST-ROUND-238-12";
+$("base").value="AA-BASE-CORINTHIAN";
 $("config").value="0";
+function selectedComponent(kind) {
+  const items=DATA[kind];
+  return items.find(item=>item.id===$(kind.slice(0,-1)).value) || items[0];
+}
 function esc(s) {
   return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
@@ -938,6 +971,23 @@ function letteringMessage(result) {
   if (result.status === 'conflict') return `${street} — ${result.name}: cannot fit the ${result.minimumIn} in minimum. Name withheld; resolve before export. Review a vendor-approved name, font or blade.`;
   return `${street} — ${result.name}: ${result.status === 'adjusted' ? 'Adjusted within minimum' : 'Fits proof check'}; H-ink height ≈ ${result.capHeightIn.toFixed(2)} in (minimum ${result.minimumIn} in).`;
 }
+function customerProofData(components, lettering) {
+  const componentNames = Object.fromEntries(Object.entries(components)
+    .map(([kind,component])=>[kind,customerSummary(component.customer)]));
+  const letteringChecks = lettering.map(result=>({
+    street:result.index===0 ? 'Primary' : 'Cross',
+    name:result.name,
+    result:['normal','adjusted'].includes(result.status) ? 'Fits proof minimum' : 'Review required',
+    minimumIn:result.minimumIn,
+    measuredInkHeightIn:result.capHeightIn
+  }));
+  return {
+    qualification:'Concept Proof — Not for fabrication',
+    components:componentNames,
+    lettering:letteringChecks,
+    note:'Confirm selected components before ordering.'
+  };
+}
 function updateIntegrity({ blade, bracket, post, finial, base, stations, pxPerIn, bladePxH, topSectionBottomY }) {
   const lettering = fitStreetLabels(blade,pxPerIn,bladePxH);
   const layoutConflict = stations.some(s=>s.active && s.bottom >= topSectionBottomY-2);
@@ -963,9 +1013,12 @@ function updateIntegrity({ blade, bracket, post, finial, base, stations, pxPerIn
   const integrity = { qualification:'Concept Proof — Not for fabrication', blocked, lettering,
     measurement:method, components, sources:SOURCES,
     compatibility:'Visual fit does not establish orderable compatibility.' };
-  $('proofIntegrity').textContent = JSON.stringify(integrity);
-  $('proofDescription').textContent = [integrity.qualification,integrity.compatibility,
-    ...Object.values(components).map(componentSummary),message,method].join('\n');
+  const customerProof = customerProofData(components,lettering);
+  $('proofIntegrity').textContent = JSON.stringify(customerProof);
+  $('proofDescription').textContent = [customerProof.qualification,
+    ...Object.values(customerProof.components),
+    ...customerProof.lettering.map(result=>`${result.street} street: ${result.result}.`),
+    customerProof.note].join('\n');
   return integrity;
 }
 function updateStreetControls() {
@@ -1038,38 +1091,38 @@ function uChannelPostMarkup(x,y,h,w=22) {
 // stops the renderer from mutating a control during its own input event.
 // ---------------------------------------------------------------------------
 function reconcileSelections() {
-  const blade   = DATA.blades[+$("blade").value];
-  const bracket = DATA.brackets[+$("bracket").value];
+  const blade   = selectedComponent('blades');
+  const bracket = selectedComponent('brackets');
   Array.from($("bracket").options).forEach((o,i)=>{
     o.disabled = DATA.brackets[i].style !== "none" && DATA.brackets[i].size !== blade.size;
   });
   // A bracket must match the blade it carries.
   if(bracket.style!=="none" && bracket.size!==blade.size) {
     const match = DATA.brackets.findIndex(x=>x.size===blade.size && x.style===bracket.style);
-    if(match>=0) $("bracket").value=match;
+    if(match>=0) $("bracket").value=DATA.brackets[match].id;
   }
   // A galvanized u-channel traffic post never carries a decorative finial.
   // That is an invalid product configuration, so it is not offered rather than
   // being drawn plausibly.
-  const post      = DATA.posts[+$("post").value];
+  const post      = selectedComponent('posts');
   const noneIdx   = DATA.finials.findIndex(f=>f.style==="none");
   const decorOK   = post.profile!=="uchannel";
   const finialSel = $("finial");
   Array.from(finialSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==noneIdx; });
-  if(!decorOK && noneIdx>=0) finialSel.value=String(noneIdx);
+  if(!decorOK && noneIdx>=0) finialSel.value=DATA.finials[noneIdx].id;
   // ...nor a decorative base. Same category of invalid product configuration.
   const baseNoneIdx = DATA.bases.findIndex(b=>b.style==="none");
   const baseSel     = $("base");
   Array.from(baseSel.options).forEach((o,i)=>{ o.disabled = !decorOK && i!==baseNoneIdx; });
-  if(!decorOK && baseNoneIdx>=0) baseSel.value=String(baseNoneIdx);
+  if(!decorOK && baseNoneIdx>=0) baseSel.value=DATA.bases[baseNoneIdx].id;
   $("systemHint").textContent = decorOK ? "" : "Couyon offers U-channel without a decorative base or finial. See the post summary for provisional dimensions.";
 }
 function render() {
-  const blade=DATA.blades[+$("blade").value];
-  const bracket=DATA.brackets[+$("bracket").value];
-  const finial=DATA.finials[+$("finial").value];
-  const post=DATA.posts[+$("post").value];
-  const base=DATA.bases[+$("base").value];
+  const blade=selectedComponent('blades');
+  const bracket=selectedComponent('brackets');
+  const finial=selectedComponent('finials');
+  const post=selectedComponent('posts');
+  const base=selectedComponent('bases');
   const config=DATA.configs[+$("config").value];
   const face=$("face").value, letters=$("letters").value;
   const noStreet1=$("noStreet1").checked;
@@ -1144,7 +1197,7 @@ function render() {
     // outer widths and catalog height; widen only its throat where needed.
     const neck = halfWidth => Math.max(halfWidth, postPxW * COLLAR_RATIO / 2);
     baseSvg = `
-      <g aria-label="TCP Corinthian Base">
+      <g aria-label="Corinthian Base">
         <!-- top cap and collar -->
         <ellipse cx="${postX}" cy="${baseTopY+4}" rx="20" ry="4" fill="#111"/>
         <path d="M ${postX-19} ${baseTopY+5} H ${postX+19}
@@ -1253,11 +1306,11 @@ function render() {
   $("proofTitle").textContent=$("job").value || "Street Name System";
   $("proof").querySelector('title').textContent = $("proofTitle").textContent + ' — Concept Proof';
   $("proof").setAttribute('aria-label', $("proofTitle").textContent + ' — Concept Proof');
-  $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : componentSummary(blade);
-  $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : componentSummary(bracket);
-  $("sumPost").textContent=componentSummary(post);
-  $("sumFinial").textContent=componentSummary(finial);
-  $("sumBase").textContent=componentSummary(base);
+  $("sumBlade").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : internalSummary(blade);
+  $("sumBracket").textContent=(noStreet1 && noStreet2) ? "No brackets — no street-name blades" : internalSummary(bracket);
+  $("sumPost").textContent=internalSummary(post);
+  $("sumFinial").textContent=internalSummary(finial);
+  $("sumBase").textContent=internalSummary(base);
   $("sumConfig").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : (noStreet1 || noStreet2) ? "Single street — centered" : `${config} · Both street faces shown in spread view`;
 
   // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
@@ -1265,9 +1318,9 @@ function render() {
     integrity,
     stations,
     collarRatio: COLLAR_RATIO,
-    post:   post.sku,
-    finial: finial.sku,
-    base:   base.sku,
+    post:   post.id,
+    finial: finial.id,
+    base:   base.id,
     postPxW: postPxW,
     matingY: postTopY,
     spineTop: spineTop,

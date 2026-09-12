@@ -6,7 +6,7 @@ module.exports = async function validateIntegrity(page, output) {
     const before = JSON.stringify(DATA);
     const widths = [];
     for (const post of [0,1,2,3]) for (const config of [0,1,2]) {
-      $('post').value = post; $('config').value = config; update();
+      $('post').value = DATA.posts[post].id; $('config').value = config; update();
       widths.push(__proofDebug.postPxW);
     }
     return { widths, unchanged: before === JSON.stringify(DATA),
@@ -14,13 +14,18 @@ module.exports = async function validateIntegrity(page, output) {
       noInventedReach: DATA.brackets.slice(1).every(b=>physicalValue(b,'reachIn') === null),
       unknownStaysUnknown: proofDimension({dimensions:{}},'widthIn') === null,
       unknownRejected: physicalValue({dimensions:{widthIn:{value:3,confidence:'unknown',source:'map'}}},'widthIn') === null,
-      none: [...DATA.finials,...DATA.bases,...DATA.brackets].filter(c=>c.style==='none').every(c=>componentSummary(c)==='None'),
+      identities: [...DATA.blades,...DATA.brackets,...DATA.finials,...DATA.posts,...DATA.bases]
+        .every(c=>c.id && Array.isArray(c.vendor) && c.customer?.name),
+      uniqueIds: new Set([...DATA.blades,...DATA.brackets,...DATA.finials,...DATA.posts,...DATA.bases].map(c=>c.id)).size ===
+        [...DATA.blades,...DATA.brackets,...DATA.finials,...DATA.posts,...DATA.bases].length,
+      customerBoundary: customerSummary(DATA.posts[0].customer)==='2 3/8 in Round Post — 12 ft' && customerSummary(DATA.posts[0])==='Component',
+      none: [...DATA.finials,...DATA.bases,...DATA.brackets].filter(c=>c.style==='none').every(c=>customerSummary(c.customer).startsWith('No ')),
       sb46: DATA.bases[2],
-      provisional: [DATA.finials[4],DATA.bases[2],DATA.brackets[1]].every(c=>componentSummary(c).toLowerCase().includes('provisional') || componentSummary(c).includes('Placeholder')),
-      pineapple: componentSummary(DATA.finials[1]) };
+      provisional: [DATA.finials[4],DATA.bases[2],DATA.brackets[1]].every(c=>internalSummary(c).toLowerCase().includes('provisional')),
+      pineapple: internalSummary(DATA.finials[1]) };
   });
   assert.deepEqual(facts.widths,[11.875,11.875,11.875,11.875,11.875,11.875,20,20,20,12.5,12.5,12.5]);
-  for (const key of ['unchanged','noInventedWidth','noInventedReach','unknownStaysUnknown','unknownRejected','none','provisional']) assert.ok(facts[key],key);
+  for (const key of ['unchanged','noInventedWidth','noInventedReach','unknownStaysUnknown','unknownRejected','identities','uniqueIds','customerBoundary','none','provisional']) assert.ok(facts[key],key);
   assert.equal(facts.sb46.dimensions.heightIn.value,29);
   assert.equal(facts.sb46.dimensions.heightIn.confidence,'vendor-supported');
   assert.match(facts.pineapple,/inferred/);
@@ -32,7 +37,7 @@ module.exports = async function validateIntegrity(page, output) {
     SOURCES.fixture = 'Synthetic test source — not vendor data';
     const scales = [], fallbackScales = [];
     try {
-      $('post').value=0; $('bracket').value=1; $('base').value=1;
+      $('post').value=DATA.posts[0].id; $('bracket').value=bracket.id; $('base').value=DATA.bases[1].id;
       $('noStreet1').checked=false; $('noStreet2').checked=false;
       for (const config of [0,1,2]) { $('config').value=config; update(); fallbackScales.push(__proofDebug.stations[0].bracketScale); }
       bracket.dimensions.reachIn={value:18,confidence:'vendor-supported',source:'fixture'};
@@ -46,7 +51,7 @@ module.exports = async function validateIntegrity(page, output) {
         physicalPreferred:proofDimension({dimensions:{widthIn:{value:4,confidence:'vendor-supported',source:'fixture'}},presentation:{widthIn:99}},'widthIn')};
     } finally {
       bracket.dimensions=saved; delete SOURCES.fixture;
-      $('noStreet2').checked=false; $('bracket').value=0; update();
+      $('noStreet2').checked=false; $('bracket').value=DATA.brackets[0].id; update();
     }
   });
   assert.ok(physical.scales.every(s=>s.mode==='physical' && Math.abs(s.scale-90/90.5)<1e-9));
@@ -77,7 +82,7 @@ module.exports = async function validateIntegrity(page, output) {
   assert.match(await page.locator('#letteringStatus').innerText(),/enter a name/);
   assert.equal(await page.locator('#exportProof').isDisabled(),true);
   await page.fill('#street1','Oak');
-  await page.selectOption('#bracket','1');
+  await page.selectOption('#bracket','AA-BRACKET-DOGWOOD-30');
   await page.screenshot({path:path.join(output,'valid-lettering.png'),fullPage:true});
 
   // Independently rasterize an SVG capital H in the actual rendered font.

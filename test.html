@@ -141,7 +141,7 @@ function waitForRig() {
 function choose(id, index) {
   const el = D().getElementById(id);
   if (!el) return;
-  el.value = String(index);
+  el.value = el.options[index]?.value ?? String(index);
   el.dispatchEvent(new (W().Event)('input', { bubbles: true }));
 }
 
@@ -480,7 +480,7 @@ function assemblyInvariant(doc, dbg) {
   const names = [...doc.querySelectorAll('[data-part="street-text"]')];
   const expected = ['noStreet1','noStreet2'].filter(id => !doc.getElementById(id).checked).length;
   check(blades.length === expected && names.length === expected, 'blade/name count');
-  check(brackets.length === (doc.getElementById('bracket').value === '0' ? 0 : expected), 'bracket count');
+  check(brackets.length === (W().selectedComponent('brackets').style === 'none' ? 0 : expected), 'bracket count');
   const boxes = blades.map(bounds).sort((a,b) => a.y-b.y);
   if (boxes.length) check(Math.abs(boxes[0].y - 125) < .01, 'upper station');
   if (boxes.length === 1) check(Math.abs(boxes[0].x + boxes[0].width/2 - 450) < .01, 'single centered');
@@ -577,7 +577,7 @@ async function build() {
       // to observe that rather than fight it.
       choose('post', p);
       choose('finial', f);
-      const actualF = +D().getElementById('finial').value;
+      const actualF = D().getElementById('finial').selectedIndex;
       if (actualF !== f) {
         // Configuration refused by the renderer (u-channel carries no decorative
         // finial). Not a rendering defect, so it is not scored.
@@ -623,7 +623,7 @@ async function build() {
       choose('post', p);
       choose('base', b);
       choose('finial', 1);
-      const actualB = +D().getElementById('base').value;
+      const actualB = D().getElementById('base').selectedIndex;
       if (actualB !== b) {
         bSkipped++;
         const c = document.createElement('div');

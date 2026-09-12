@@ -41,16 +41,17 @@ confirm which revision is running.
   center automatically and decorative brackets attach beneath their blades
 - Lettering is checked independently against the provisional 4 in capital-H
   ink-height interpretation; unresolved names block print and SVG export
-- Component summary table with SKUs for the spec sheet
+- Screen-only internal component summary with AA IDs, vendor identity, and provenance
 - **Print / Save PDF** — print stylesheet hides the controls and prints the proof card only
 - **Export SVG** — downloads `AA_Street_Name_Proof.svg` for vector editing
 
 ## Component catalog
 
 Components live in the `DATA` object near the top of the `<script>` block in
-`index.html`. Adding a part is a matter of adding an entry with its `sku`,
-`label`, and geometry fields, then checking the contact sheet. Posts use numeric
-`widthIn`; bases use `heightIn`; display labels never drive those dimensions.
+`index.html`. Each component has a stable AA `id`, a `vendor` array, and a
+customer-safe `customer.name`, plus its geometry fields. `internalSummary()` can
+read the full record; `customerSummary()` receives only the `customer` object.
+Posts use numeric `widthIn`; bases use `heightIn`; identity text never drives dimensions.
 
 Finial artwork (pineapple, ball, dome cap) is hand-built SVG stored in the
 `AA_*_SVG` constants. The Rouzan 4 in square post and SB46 base are selectable

@@ -27,11 +27,11 @@ const server = http.createServer((req, res) => {
     await page.route('https://api.github.com/**', route => route.abort());
     await page.goto(url);
     await page.screenshot({ path: path.join(output, 'default.png'), fullPage: true });
-    await page.selectOption('#bracket', '1');
+    await page.selectOption('#bracket', 'AA-BRACKET-DOGWOOD-30');
     await page.screenshot({ path: path.join(output, 'dogwood.png'), fullPage: true });
-    await page.selectOption('#post', '2');
-    await page.selectOption('#base', '2');
-    await page.selectOption('#finial', '1');
+    await page.selectOption('#post', 'AA-POST-SQUARE-4-12');
+    await page.selectOption('#base', 'AA-BASE-SQUARE-DECORATIVE');
+    await page.selectOption('#finial', 'AA-FINIAL-PINEAPPLE-V1');
     await page.selectOption('#config', '2');
     await page.screenshot({ path: path.join(output, 'square-offset.png'), fullPage: true });
     await page.check('#noStreet2');
@@ -39,10 +39,10 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'single-street.png'), fullPage: true });
     await page.uncheck('#noStreet2');
     assert.equal(await page.locator('#config').inputValue(), '2');
-    await page.selectOption('#post', '3');
-    assert.equal(await page.locator('#finial').inputValue(), '0');
-    assert.equal(await page.locator('#base').inputValue(), '0');
-    await page.selectOption('#bracket', '0');
+    await page.selectOption('#post', 'AA-POST-UCHANNEL-12');
+    assert.equal(await page.locator('#finial').inputValue(), 'AA-FINIAL-NONE');
+    assert.equal(await page.locator('#base').inputValue(), 'AA-BASE-NONE');
+    await page.selectOption('#bracket', 'AA-BRACKET-NONE');
     await page.screenshot({ path: path.join(output, 'u-channel.png'), fullPage: true });
     await page.fill('#street1', 'W'.repeat(60));
     assert.equal(await page.locator('[data-part="street-text"][data-street="0"]').textContent(), 'REVIEW NAME');
@@ -52,6 +52,10 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'lettering-conflict.png'), fullPage: true });
     await page.fill('#street1', 'Oak Ln');
     await page.fill('#street2', 'A&B <C>');
+    await page.selectOption('#post', 'AA-POST-ROUND-238-12');
+    await page.selectOption('#base', 'AA-BASE-CORINTHIAN');
+    await page.selectOption('#finial', 'AA-FINIAL-SPEAR-V1');
+    await page.selectOption('#bracket', 'AA-BRACKET-DOGWOOD-30');
     assert.equal(await page.locator('[data-part="street-text"][data-street="1"]').textContent(), 'A&B <C>');
     const boundsFit = await page.evaluate(() => [...document.querySelectorAll('[data-part="street-text"]')].every(t => {
       const b = document.querySelector(`[data-part="blade"][data-street="${t.dataset.street}"]`).getBBox();
@@ -59,25 +63,37 @@ const server = http.createServer((req, res) => {
       return r.x >= b.x+6 && r.x+r.width <= b.x+b.width-6;
     }));
     assert.ok(boundsFit, 'accepted names must fit their individual blades');
+    const forbiddenCustomerText = await page.evaluate(() => [...new Set([
+      ...Object.values(DATA).filter(Array.isArray).flatMap(items=>items.flatMap(item=>[
+        item.id,
+        item.family,
+        ...(item.vendor || []).flatMap(v=>[v.name,v.sku])
+      ])),
+      'vendor-supported','reference-derived','representative artwork','provisional','placeholder','fit unverified'
+    ].filter(Boolean))]);
+    assert.match(await page.locator('#sumPost').innerText(),/AA-POST-ROUND-238-12.*TCP-238-BPP/,'internal screen summary retains AA and vendor identity');
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export SVG' }).click();
     const download = await downloadPromise;
     const exported = path.join(output, download.suggestedFilename());
     await download.saveAs(exported);
-    const exportCheck = await page.evaluate(source => {
+    const exportCheck = await page.evaluate(({source,forbiddenCustomerText}) => {
       const doc = new DOMParser().parseFromString(source, 'image/svg+xml');
-      const integrity = JSON.parse(doc.querySelector('metadata').textContent);
+      const customerProof = JSON.parse(doc.querySelector('metadata').textContent);
       const disclosure = doc.querySelector('desc').textContent;
-      return !doc.querySelector('parsererror') && !!doc.querySelector('title') && !integrity.blocked &&
-        integrity.components.post.presentation.widthIn === 2.5 &&
-        !('widthIn' in integrity.components.post.dimensions) &&
-        integrity.components.blade.lettering.applicability === 'project-guideline' &&
-        integrity.measurement.includes('Capital-H') &&
-        disclosure.includes('Capital-H') && disclosure.includes('Visual fit does not establish') &&
+      return !doc.querySelector('parsererror') && !!doc.querySelector('title') &&
+        customerProof.components.post === '2 3/8 in Round Post — 12 ft' &&
+        customerProof.components.finial === 'Spear Finial' &&
+        customerProof.components.base === 'Corinthian Base' &&
+        customerProof.components.bracket === 'Dogwood Bracket — 30 in Blade' &&
+        customerProof.components.blade === '9 in Street-Name Blade' &&
+        customerProof.lettering.every(result=>result.result==='Fits proof minimum') &&
+        forbiddenCustomerText.every(secret=>!source.includes(secret)) &&
+        disclosure.includes('2 3/8 in Round Post') && disclosure.includes('Confirm selected components') &&
         doc.documentElement.textContent.includes('Not for fabrication') &&
         doc.querySelectorAll('[data-part="blade"]').length === 2;
-    }, fs.readFileSync(exported, 'utf8'));
-    assert.ok(exportCheck, 'standalone SVG must parse and retain proof qualification');
+    }, {source:fs.readFileSync(exported, 'utf8'),forbiddenCustomerText});
+    assert.ok(exportCheck, 'standalone SVG must parse and contain customer-safe identity only');
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(url);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile page overflow');
@@ -86,6 +102,9 @@ const server = http.createServer((req, res) => {
     await page.fill('#street2', 'Pine St');
     await page.emulateMedia({ media: 'print' });
     assert.equal(await page.locator('.controls').isVisible(), false);
+    assert.equal(await page.locator('.summary').isVisible(), false,'internal summary must not print');
+    const printText = await page.locator('body').innerText();
+    assert.ok(forbiddenCustomerText.every(secret=>!printText.includes(secret)),'print-visible text must exclude internal identity and confidence data');
     await page.pdf({ path: path.join(output, 'proof.pdf'), format: 'Letter', printBackground: true });
     await page.emulateMedia({ media: 'screen' });
     await page.setViewportSize({ width: 1440, height: 1100 });
@@ -101,7 +120,11 @@ const server = http.createServer((req, res) => {
     await page.screenshot({ path: path.join(output, 'contact-sheet.png'), fullPage: true });
     const failures = await page.locator('.cell.bad').count();
     if (failures) console.log(await page.locator('.cell.bad').allInnerTexts());
-    console.log(await page.evaluate(() => window.__testResults));
+    const contactResults = await page.evaluate(() => window.__testResults);
+    console.log(contactResults);
+    assert.equal(contactResults.finialChecks,12,'finial mounting matrix must execute');
+    assert.equal(contactResults.baseChecks,13,'base joint matrix must execute');
+    assert.equal(contactResults.assemblyChecks,144,'assembly matrix must execute');
     const negativeControls = await page.evaluate(() => {
       choose('post', 0); choose('base', 1); choose('finial', 3);
       choose('bracket', 1); choose('config', 0);

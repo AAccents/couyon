@@ -17,9 +17,10 @@ Confidence labels have these meanings:
   and is not fabrication geometry;
 - **unknown**: the supplied material does not verify the fact.
 
-The source keys embedded in every exported SVG refer to the supplied *Couyon
-Component Confidence Map v1* and the supplied curated vendor PDF. Within that
-PDF, the proof uses OPP p.5 for the nominal 30 by 9 inch blade, OPP p.61 for the
+Internal source keys refer to the supplied *Couyon Component Confidence Map v1*
+and the supplied curated vendor PDF. They remain available in the screen-only
+internal summary and `window.__proofDebug`; they are not embedded in customer
+print or SVG output. Within the PDF, the proof uses OPP p.5 for the nominal 30 by 9 inch blade, OPP p.61 for the
 2 3/8 inch round profile, OPP p.62 for the 4 inch square profile and SB46, OPP
 p.63 for finial variants, and CPC pp.16–17 for CPC brackets, lettering guidance,
 posts, bases, and assembly references.
@@ -52,6 +53,6 @@ cannot fit at that size, the blade displays `REVIEW NAME`, the complete proposed
 name remains in the input and warning, and print and SVG export are blocked.
 
 Standalone SVG exports retain the “Concept Proof — Not for fabrication” notice,
-the measurement interpretation, the lettering results, component confidence
-metadata, source labels, and the warning that visual fit does not establish
-orderable compatibility.
+customer-safe component names, and customer-safe lettering results. Vendor names,
+SKUs, AA IDs, family names, confidence labels, source labels, and internal notes
+remain outside the customer export.

@@ -46,9 +46,9 @@ Both departures are deliberate and disclosed. Neither changes the SKU.
 
 > Proof geometry may normalize *appearance*. It may never normalize *the bill of materials*.
 
-A rendering accommodation must always be visible in the component summary table, which
-is read by whoever places the order. It must not appear as a defect notice on the drawing,
-which is read by the customer approving the design.
+A rendering accommodation must always be visible in the screen-only internal component
+summary, which is read by whoever places the order. It must not appear as a defect notice
+on the drawing, which is read by the customer approving the design.
 
 ---
 
@@ -64,6 +64,20 @@ Consequences:
 - It must never become the document someone fabricates or orders from without consulting
   the spec table.
 - Every proof carries the *Concept Proof — Not for fabrication* mark.
+
+### Identity boundary
+
+Every component record has a stable AA `id`, a `vendor` array, and a
+customer-safe `customer` object. Vendor arrays exist from the first entry so later
+equivalent suppliers do not require a schema change; vendor switching is outside the
+current implementation.
+
+`internalSummary(component)` may read the full record and is rendered only inside a
+`.screenOnly` block. `customerSummary(component.customer)` can read only the customer
+projection. The live and exported SVG metadata and description are built through that
+customer projection, so vendor identity, AA IDs, family names, provenance, and debug
+state are structurally unavailable to the customer-output path. Component `<select>`
+values use stable AA IDs; array positions remain only a test-matrix concern.
 
 ---
 
@@ -425,8 +439,8 @@ not about a post/finial pair, so it does not violate section 10.
 
 ### Surfacing
 
-- **Component summary table** — carries the note: *representative image; order the 2⅜″
-  variant*. This is read by whoever places the order.
+- **Screen-only internal component summary** — carries provenance and ordering detail.
+  Print CSS excludes the entire block.
 - **The drawing** — carries nothing. It is a customer approval document.
 
 ---
