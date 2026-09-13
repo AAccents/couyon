@@ -56,6 +56,13 @@ td{overflow-wrap:anywhere}
  td{padding:5px 6px}
  body[data-proof-blocked="true"] .canvas{display:none}
 }
+body[data-view="continuous"] #proof{max-width:816px;background:white;border-radius:0}
+body[data-view="continuous"] .proofHeader{display:none}
+@page{size:letter portrait;margin:0}
+@media print{
+ body[data-view="continuous"] .canvas{padding:0}
+ body[data-view="continuous"] .canvas #proof{width:8.5in;height:11in;max-height:none;max-width:none;display:block}
+}
 </style>
 </head>
 <body>
@@ -126,7 +133,9 @@ td{overflow-wrap:anywhere}
     <label>Base</label><select id="base"></select>
     <div class="note" id="systemHint" role="status"></div>
   </div>
-  <div class="actions">
+  <label for="proofView">Presentation</label>
+  <select id="proofView"><option value="continuous">Customer proof — continuous</option><option value="broken">Working view — broken post</option></select>
+  <div class="actions" style="margin-top:14px">
     <button id="printProof" class="primary" onclick="printProof()">Print / Save PDF</button>
     <button id="exportProof" class="secondary" onclick="exportSVG()">Export SVG</button>
   </div>
@@ -150,10 +159,11 @@ td{overflow-wrap:anywhere}
         <title>Street Name System — Concept Proof</title>
         <desc id="proofDescription"></desc>
         <metadata id="proofIntegrity"></metadata>
-        <rect width="900" height="620" fill="#f4f6f8"/>
+        <rect id="sheetBackground" width="900" height="620" fill="#f4f6f8"/>
 
-        <g id="assembly"></g>
-        <text x="450" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#68707b">Concept Proof — Not for fabrication</text>
+        <g id="projection"><g id="inchAssembly"><g id="assembly"></g></g></g>
+        <g id="sheetComposition"></g>
+        <text id="legacyQualification" x="450" y="598" text-anchor="middle" font-family="Arial,sans-serif" font-size="12" fill="#68707b">Concept Proof — Not for fabrication</text>
       </svg>
     </div>
     <div class="summary screenOnly" aria-label="Internal component details">
@@ -172,6 +182,7 @@ td{overflow-wrap:anywhere}
 </main>
 </div>
 <script src="artwork.js"></script>
+<script src="proof-sheet.js"></script>
 <script>
 const ART = window.AA_ART;
 const COLLAR_RATIO = 1.10;
@@ -1047,18 +1058,20 @@ function render() {
   // -------------------------
   // Dimension-driven geometry
   // -------------------------
-  const baseIn = base.style === 'none' ? 0 : proofDimension(base,'heightIn');
-  const bladeWIn = proofDimension(blade,'widthIn');
-  const bladeHIn = proofDimension(blade,'heightIn');
-  // v0.2: one uniform local scale for visible hardware; full post height is shown with a break.
+  const continuous = $('proofView').value === 'continuous';
+  const model = assemblyInches({post,base,blade,finial,bracket,config,noStreet1,noStreet2,lengthFt});
+  const baseIn = model.baseHeight;
+  const bladeWIn = model.bladeWidth;
+  const bladeHIn = model.bladeHeight;
+  // Existing path/lettering authoring units; converted to inches before projection.
   const pxPerIn = 5.0;
-  const groundY = 552;
-  const postX = 450;
-  const postPxW = postWidthIn(post) * pxPerIn;
+  const groundY = continuous ? model.datums.ground * pxPerIn : 552;
+  const postX = continuous ? 0 : 450;
+  const postPxW = model.postWidth * pxPerIn;
   const basePxH = baseIn*pxPerIn;
   const bladePxW = bladeWIn*pxPerIn;
   const bladePxH = bladeHIn*pxPerIn;
-  const postTopY = 110;
+  const postTopY = continuous ? 0 : 110;
   // ---------------------------------------------------------------------------
   // Compression zone. The upper boundary is fixed; the LOWER boundary is derived
   // from the base so a consistent run of post is always visible emerging from it.
@@ -1070,11 +1083,14 @@ function render() {
   const EXPOSED_RUN     = 40;   // px of post that must show above the base
   const MIN_COMPRESSION = 40;   // px — the zone may never collapse below this
   const MAX_COMPRESSION = 60;   // keep a bare post from looking like two disconnected stubs
-  const topSectionBottomY = 330;
+  const topSectionBottomY = continuous ? groundY-basePxH-40 : 330;
   const baseTopY = groundY-basePxH;
-  const lowerSectionTopY = Math.max(topSectionBottomY + MIN_COMPRESSION,
+  const lowerSectionTopY = continuous ? topSectionBottomY : Math.max(topSectionBottomY + MIN_COMPRESSION,
     Math.min(topSectionBottomY + MAX_COMPRESSION, baseTopY - EXPOSED_RUN));
-  const stations = streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH,
+  const stations = continuous ? model.stations.map(station=>({ ...station,
+    cx:station.cx*pxPerIn,cy:station.cy*pxPerIn,railY:station.railY*pxPerIn,
+    bottom:station.bottom*pxPerIn,bracketScale:station.bracketScale*pxPerIn
+  })) : streetLayout({ postX, postTopY, postPxW, bladePxW, bladePxH,
     pxPerIn, config, bracket, noStreet1, noStreet2 });
   const [primary, cross] = stations;
   const b1cx=primary.cx, b1cy=primary.cy, b2cx=cross.cx, b2cy=cross.cy;
@@ -1170,7 +1186,7 @@ function render() {
   let finialScale = null;
   const finialAsset = finial.artwork ? ART[finial.artwork] : null;
   if(finialAsset) {
-    finialScale = mountScale(finialAsset, postPxW);
+    finialScale = continuous ? model.finialScale*pxPerIn : mountScale(finialAsset, postPxW);
     finialSvg = finialArtworkMarkup(finialAsset,postX,postTopY,finialScale);
   }
   // The spine continues UP into the finial's collar by that asset's embed depth
@@ -1187,7 +1203,9 @@ function render() {
   const upperPostSvg = post.profile==="uchannel"
     ? uChannelPostMarkup(postX,spineTop,topSectionBottomY-spineTop,postPxW)
     : postSegment(postX, spineTop, topSectionBottomY-spineTop, postPxW, finialAsset ? 0 : capR, 0);
-  const postArtwork = post.artwork ? postArtworkMarkup(ART[post.artwork],[
+  const postArtwork = post.artwork ? postArtworkMarkup(ART[post.artwork],continuous ? [
+    {cx:postX,y:spineTop,h:groundY-spineTop,w:postPxW,rTop:finialAsset ? 0 : capR,rBot:capR}
+  ] : [
     {cx:postX,y:lowerSectionTopY,h:groundY-lowerSectionTopY,w:postPxW,rTop:0,rBot:capR},
     {cx:postX,y:spineTop,h:topSectionBottomY-spineTop,w:postPxW,rTop:finialAsset ? 0 : capR,rBot:0}
   ]) : '';
@@ -1195,7 +1213,7 @@ function render() {
     <g data-part="post-lower">${lowerPostSvg}</g>
     <g data-part="post-upper">${upperPostSvg}</g>
     ${postArtwork}
-    <g data-part="break">
+    <g data-part="break" ${continuous ? 'display="none"' : ''}>
       <path d="M${postX-24} ${topSectionBottomY-3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
             fill="none" stroke="#6b7280" stroke-width="2"/>
       <path d="M${postX-24} ${lowerSectionTopY+3} q8 -8 16 0 q8 8 16 0 q8 -8 16 0"
@@ -1218,9 +1236,14 @@ function render() {
           font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s1)}</text>`}
     ${noStreet2 ? "" : `<text data-part="street-text" data-street="1" data-available="${bladePxW-16}" x="${b2cx}" y="${b2cy}" dominant-baseline="central" text-anchor="middle"
           font-family="Arial Narrow,Arial,sans-serif" font-size="${textSize}" font-weight="700" fill="${letters}">${esc(s2)}</text>`}
-    <text x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
+    <text ${continuous ? 'display="none"' : ''} x="${postX+38}" y="${(topSectionBottomY+lowerSectionTopY)/2+4}"
           font-family="Arial,sans-serif" font-size="14" fill="#68707b">${lengthFt} ft post, shown broken</text>
   `
+  if(continuous) {
+    $('assembly').querySelector('[data-part="break"]').replaceChildren();
+    $('assembly').lastElementChild.remove(); // Legacy broken-length caption only.
+  }
+  configureProjection(continuous, model);
   const compatibility=validateAssembly({post,finial,base});
   const integrity = updateIntegrity({ blade,bracket,post,finial,base,lengthFt,stations,pxPerIn,bladePxH,topSectionBottomY });
   $("proofTitle").textContent=$("job").value || "Street Name System";
@@ -1233,9 +1256,15 @@ function render() {
   $("sumBase").textContent=internalSummary(base);
   $("sumConfig").textContent=(noStreet1 && noStreet2) ? "No street-name blades" : (noStreet1 || noStreet2) ? "Single street — centered" : `${config} · Both street faces shown in spread view`;
 
+  composeProofSheet({continuous,model,finial,post,base,blade,bracket,lengthFt});
+  checkSheetContainment(integrity);
+
   // Snapshot for the contact sheet (test.html). Read-only; no layout depends on it.
   window.__proofDebug = {
     integrity,
+    model,
+    view: continuous ? 'continuous' : 'broken',
+    pageScale: continuous ? 72/20 : null,
     compatibility,
     stations,
     collarRatio: COLLAR_RATIO,
@@ -1271,6 +1300,7 @@ document.querySelectorAll('label').forEach(label => {
   if (control && control.matches('input,select')) label.htmlFor = control.id;
 });
 document.querySelectorAll("input,select").forEach(el=>el.addEventListener("input",update));
+if (new URLSearchParams(location.search).get('view') === 'broken') $('proofView').value='broken';
 update();
 document.fonts.ready.then(update);
 document.fonts.addEventListener('loadingdone',update);

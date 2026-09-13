@@ -35,8 +35,9 @@ confirm which revision is running.
 - Pick a blade style, bracket, finial, post, and base from the component catalog
 - Enter a proof title and one or two street names (either can be omitted)
 - Choose sign face and lettering colors
-- Live SVG preview scaled from real catalog dimensions (5 px per inch), with the
-  post shown broken so full 12 ft / 13 ft heights fit on the page
+- Continuous customer proof on Letter at fixed 1:20 scale, with a scale-labeled
+  1:4 finial detail when selected; 10–13 ft posts retain their relative heights
+- Explicit broken-post working view preserves the original rendering workflow
 - Declared spread view with Standard / Inverted / Offset layouts; single streets
   center automatically and decorative brackets attach beneath their blades
 - Lettering is checked independently against the provisional 4 in capital-H
@@ -85,6 +86,11 @@ browser. Screenshots and proof exports go to a temporary directory printed by th
 set `PROOF_TEST_OUTPUT` to choose another directory, or `CHROME_CHANNEL=msedge` to use Edge.
 These are developer tools, not application dependencies. The app still opens directly
 from `index.html` without installation.
+
+The runner selects the broken working view for the preserved legacy checks and then
+tests the continuous default separately: four post lengths, uniform page ratios,
+265 catalog combinations, artwork path hashes, joints, standalone SVG and print.
+See [experiment evaluation](docs/ASTRA-EVALUATION.md) for results and limitations.
 
 Treat `main` as the canonical current Couyon source. Before editing, fetch the
 latest repository version. After a meaningful, tested change, commit it with a

@@ -1,5 +1,32 @@
 # Couyon — Rendering Architecture
 
+## Continuous customer-proof experiment
+
+The default customer view now uses `proof-sheet.js`: catalog/presentation facts
+and attachment datums in inches, one 1:20 projection, then Letter sheet composition.
+`assemblyInches()` distinguishes known physical dimensions from provisional
+presentation dimensions. Nominal post length includes the portion embedded in the
+finial socket. Ground and base datums follow from that length; no width correction
+or per-proof fit is applied. The fixed-scale sheet blocks overflow rather than
+shrinking the product. Installation burial depth is not inferred.
+
+Existing bracket, lettering, base-path and mounting emitters retain their five
+authoring units per inch. The `inchAssembly` group explicitly converts those units
+to inches; its parent applies 72/20 points per inch and page placement. This is an
+incremental adapter, not a rewrite of protected product paths. Post artwork is a
+parametric shaft surface; the continuous view applies it once over the full post,
+avoiding the old segment shading restart. Mount frames and collar ratio are unchanged.
+
+The optional finial detail reuses the exact mounted finial paths at 1:4. It removes
+duplicate part hooks, namespaces IDs, and carries its own scale label. Output finish
+gradients and leaf-level non-scaling detail strokes change paint, not geometry.
+
+The old 900 × 620 broken view remains a real selectable working view, also reachable
+with `?view=broken`. Its existing invariant suites, tolerances, and negative controls
+remain intact. `tests/continuous.cjs` separately checks the customer default.
+The historical sections below describe the retained legacy renderer; their allowance
+for compression/appearance normalization does not authorize new geometry changes.
+
 **Status:** implemented mounting and spread-view model; catalog compatibility remains incomplete.
 **Applies to:** `index.html` (AA Proof Generator), prototype v0.7 and forward.
 **Audience:** anyone (human or AI) modifying the renderer. Read this before changing
