@@ -11,7 +11,8 @@ const root = path.resolve(__dirname, '..');
 const output = process.env.PROOF_TEST_OUTPUT || fs.mkdtempSync(path.join(os.tmpdir(), 'couyon-'));
 fs.mkdirSync(output, { recursive: true });
 const server = http.createServer((req, res) => {
-  const name = req.url === '/test.html' ? 'test.html' : req.url === '/artwork.js' ? 'artwork.js' : ['/', '/index.html'].includes(req.url) ? 'index.html' : null;
+  const requestPath = req.url.split('?')[0];
+  const name = requestPath === '/test.html' ? 'test.html' : requestPath === '/artwork.js' ? 'artwork.js' : requestPath === '/proof-sheet.js' ? 'proof-sheet.js' : ['/', '/index.html'].includes(requestPath) ? 'index.html' : null;
   if (!name) { res.writeHead(404); res.end(); return; }
   res.setHeader('Content-Type', name.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'text/html; charset=utf-8');
   res.end(fs.readFileSync(path.join(root, name)));
@@ -26,7 +27,7 @@ const server = http.createServer((req, res) => {
     const errors = [];
     page.on('pageerror', e => { errors.push(e.message); console.error('Browser:', e.message); });
     await page.route('https://api.github.com/**', route => route.abort());
-    await page.goto(url);
+    await page.goto(url + '?view=broken');
     await page.screenshot({ path: path.join(output, 'default.png'), fullPage: true });
     await page.selectOption('#bracket', 'AA-BRACKET-DOGWOOD-30');
     await page.screenshot({ path: path.join(output, 'dogwood.png'), fullPage: true });
@@ -110,7 +111,7 @@ const server = http.createServer((req, res) => {
     }, {source:fs.readFileSync(exported, 'utf8'),forbiddenCustomerText});
     assert.ok(exportCheck.pass,`standalone SVG must parse and contain customer-safe identity only: ${JSON.stringify(exportCheck.checks)}`);
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto(url);
+    await page.goto(url + '?view=broken');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'mobile page overflow');
     await page.screenshot({ path: path.join(output, 'mobile.png'), fullPage: true });
     await page.fill('#street1', 'Oak Ln');
@@ -125,6 +126,7 @@ const server = http.createServer((req, res) => {
     await page.setViewportSize({ width: 1440, height: 1100 });
     await require('./integrity.cjs')(page,output);
     await require('./phase2.cjs')(page,output);
+    await require('./continuous.cjs')(page,output,url);
     await page.goto(url + '/test.html');
     await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Base joint:'), null, { timeout: 60000 }).catch(async e => {
       console.error(await page.locator('body').innerText());
